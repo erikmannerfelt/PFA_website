@@ -1,0 +1,269 @@
+{% extends "base.html.jinja2" %}
+{% block extrahead %}
+  <title>Instructions - {{base_title}}</title>
+
+{% endblock extrahead %}
+{% macro colored_box(color) %}
+    <span class="color-box" style="background-color: {{color}};"></span>
+{% endmacro %}
+{% macro annotated_box(color, annotation) %}
+    <span style="white-space: nowrap">{{ colored_box(color) }}<b>{{annotation}}</b></span>
+{% endmacro %}
+{% set temperate_ice = annotated_box("red", "Temperate ice") %}
+{% set bed_cold = annotated_box("#002EBD", "Glacier bed (no temperate ice)") %}
+{% set bed_unspecified = annotated_box('#CE00FF', "Glacier bed") %}
+{% set bed_missing = annotated_box('#62F700', "Glacier bed not visible") %}
+{% block content %}
+  <div class="header">
+      <a class="home-link" href="/" id="home-button">Home</a>
+      <div style="flex: 1 1 auto;">
+        <h1 class="header-title">{{base_title}}</h1>
+      </div>
+  </div>
+  <div style="margin-left: 0vw; width: 90vw;">
+  <div class="howto-content-container">
+    <div class="howto-text-content">
+    <h1>How to use the website</h1>
+    <b>Please read the instructions thoroughly before starting!</b>
+    <p>
+    Thank you for participating in this experiment.
+    Its purpose is to evaluate the subjective nature of interpreting radargrams of glaciers.
+    Therefore, this instruction set is as limited as possible, to avoid the transfer of subjective biases!
+    </p>
+
+    <h2>How to become a contributor</h2>
+    <p>
+    We welcome any contributor with basic background in radar interpretation.
+    You do not need to be an expert at all, but some understanding of what we work with is expected!
+    We plan on accepting contributions until late 2025.
+    To register, please send an email to <a href="mailto:svalbardradar@gmail.com">svalbardradar@gmail.com</a> with "Contribution request" in the title, and briefly explain your experience in just a sentence or two.
+    Your contribution is anonymous to all except the contribution administrator (behind the email), who is not part of designing the experiment.
+    </p>
+    
+
+    <h2>What we want</h2>
+    <p>
+    We want to extract two things: the cold/warm transition (<b>temperate ice</b>) and the <b>glacier bed</b>.
+    How?
+    By drawing lines to mark boundaries for the cold/warm ice interface, or the ice/bed interface.
+    There are of course many other features within these radargrams, such as englacial channels and debris.
+    The study is currently not aimed to these features, but comments can be added for features of interest. 
+    The amount of time spent is up to the contributors. Interpreting a few radargrams is helpful, but the more you can interpret, the better!
+    </p>
+    </div>
+  </div>
+
+
+  <div class="howto-content-container">
+    <div class="howto-text-content">
+    <h2>How it might look like</h2>
+    <p>
+    The illustration shows how interpretations may end up looking like.
+    We do not want to show how we would interpret a real radargram because it would defeat the point of the experiment!
+    <list>
+      <li>{{temperate_ice}} marks the upper boundary of the temperate ice. The dashed lines show two possible interpretations; which one is up to you!
+      <li>{{bed_unspecified}} is wherever we see the bed and we may/do have temperate ice above.
+      <li>{{bed_cold}} assumes no temperate ice above.
+      <li>{{bed_missing}} is when the bed is not visible at all, not just unclear. The depth (y) coordinates do not matter, only the trace (x).
+    </list>
+    </p>
+    </div>
+
+    <div class="howto-image-content">
+      <img src="{{ url_for('static', filename='images/interp_illustration.png') }}"></img>
+    </div>
+  </div>
+
+  <div class="howto-content-container">
+    <div class="howto-text-content">
+    <h2 style="margin-bottom: 40px;">What to look for (1/4)</h2>
+    <h3>{{bed_cold}}</h3>
+  
+    <p>
+    The arguably easiest thing to look for is the bed of a glacier without temperate ice.
+    As seen in the picture, there is a quite sharp line with relatively clean ice above.
+    Note that this class simply means no temperate ice is above the bed, but we cannot truly tell whether a warm basal layer exists from just looking at the data.
+    Also in the picture, there are some englacial features (thrust features perhaps) which we don't focus on in this experiment.
+    </p>
+
+    <p>
+    If we don't want to assume that the bed is overlain by only cold ice, we can instead use the safer {{bed_unspecified}} class to delineate it.
+    </p>
+    </div>
+
+    <div class="howto-image-content">
+      <img src="{{ url_for('static', filename='images/examples/kroppbreen_cold_bed.jpg') }}"></img>
+    </div>
+
+  </div>
+
+  <div class="howto-content-container">
+    <div class="howto-text-content">
+      <h2 style="margin-bottom: 40px;">What to look for (2/4)</h2>
+      <h3>{{temperate_ice}}</h3>
+      <p>
+      Temperate ice (ice with water in it) shows up as very noisy data in an almost raincloud-like effect.
+      We want to map the upper boundary of this.
+      From the picture, it is probably immediately evident how subjective mapping the boundary is.
+      That's the point of the experiment!
+      Make sure to <b>map the upper boundary even when the temperate ice reaches the top</b> of the radargram.
+      Otherwise, the data (temperate/cold) will be inconclusive.
+      Remember to "finish" the line; start and end the line at the bed (unless temperate ice continues beyond the extent of the radargram).
+      </p>
+      <p>
+      We use the {{bed_unspecified}} class to delineate the bed under the temperate ice.
+       </p>
+    </div>
+    <div class="howto-image-content">
+      <image src="{{ url_for('static', filename='images/examples/dronbreen_temperate_ice.jpg') }}"></image>
+    </div>
+  </div>
+
+  <div class="howto-content-container">
+    <div class="howto-text-content">
+      <h2 style="margin-bottom: 40px;">What to look for (3/4)</h2>
+      <h3>{{bed_unspecified}}</h3>
+      <p>
+      We often see the glacier bed with scattering above it.
+      This means that we might have temperate ice above the bed.
+      <!--This means that we might have temperate ice above the bed, and we therefore don't want the {{bed_cold}} class for delineation.
+      Instead we use this unspecified bed class.
+      -->
+      If you're ever unsure, just use this bed class instead of the cold-assuming one! 
+      </p>
+      <p>
+      In the picture, we see scattering indicative of temperate ice, which would deserve its own {{temperate_ice}} delineation.
+      Underneath is a clear bed reflection, which would be a generic glacier bed.
+      </p>
+      <p>
+      The vertical stripes are artefacts of crevasses that we drove over (oops!).
+      </p>
+    </div>
+    <div class="howto-image-content">
+      <image src="{{ url_for('static', filename='images/examples/bergmesterbreen_temperate_bed.jpg') }}"></image>
+    </div>
+  </div>
+
+
+  <div class="howto-content-container">
+    <div class="howto-text-content">
+      <h2 style="margin-bottom: 40px;">What to look for (4/4)</h2>
+      <h3>{{bed_missing}}</h3>
+
+      <p>
+      In some cases, the bed is simply not visible.
+      Either it's because the bed is deeper down than the radar is set-up to observe, or because there is so much temperate ice that it completely hides the bed.
+      In that case, there is a special class to signify that the bed is invisible.
+      It is added as a normal line, but the depth does not matter (only the x-coordinate is read).
+      </p>
+      <p>
+      In the picture below, the bed seems to be clear only in the middle of the radargram. Therefore, a {{bed_unspecified}} or {{bed_cold}} could be added where it is visible.
+      Every other part can be flagged as not visible.
+      The upper {{temperate_ice}} boundary should be added too!
+   
+       </p>
+    </div>
+    <div class="howto-image-content">
+      <image src="{{ url_for('static', filename='images/examples/ragnamariebreen_no_bed.jpg') }}"></image>
+    </div>
+  </div>
+
+  
+  <div class="howto-content-container">
+    <div class="howto-text-content">
+    <h2>How to add interpretations</h2>
+      <p>
+      Interpretations are added as lines.
+      The starting point, endpoint and everything in between counts, so take care!
+      </p>
+      <p>
+      - <span style="color: red">1</span>: Interpretations are added in the radargram toolbar.
+      The icons below are for editing/deleting lines.
+      </p>
+      <p>
+      - <span style="color: red">2</span>: They are assigned whatever color/class that is chosen above. You can always click on an added line and change its class or to split it.
+      </p>
+      <p>
+      - <span style="color: red">3</span>: The display style of the radargram can be chosen; <i>Absolute</i> (absolute values) suits most needs, but the <i>classic</i> view has more fine-grained detail.
+      </p>
+      <p>
+      <b>Please be brave</b>; map a line even if you're a bit unsure!
+      The ensemble spread will tell if what you mapped out was uncertain.
+      </p>
+      <p>
+      <b>Please avoid overhangs</b>; During evaluation, the line y-coordinate will be evaluated as y(x). 
+      If multiple y's exist for the same x (i.e. a line that passes over itself), there will be trouble (for us).
+      </p>
+
+    <h3>Saving/loading</h3>
+    <p>
+    It is possible to save and load progress with the associated buttons.
+    Saving means downloading the progress as a file, which can be imported again.
+    <b>Nothing is saved on the server or your browser</b>, so saving is important!
+    </p>
+    <h3>Submitting</h3>
+    <p>
+    When finished, submit the interpretations with the submit button.
+    We will only use the last submission in case you submit multiple times.
+    </p>
+
+    </div>
+    <div class="howto-image-content">
+      <image src="{{ url_for('static', filename='images/howto_add_lines.png') }}"></image>
+    </div>
+
+
+  </div>
+     
+
+
+
+  <div class="howto-content-container">
+    <div class="howto-text-content">
+    <h2>How the data are aggregated</h2>
+    <p>
+      Once we have all interpretations, we will use this as an ensemble dataset to aggregate into one line (one for temperate ice and one for the bed) with a spread.
+      How this will be done exactly is still being designed, but it will most likely include Gaussian Process Regression.
+      Each user's contribution will be weighed against their relative agreement with the others; a consistent user will be given a large certainty flag, while an inconsistent user will be more uncertain.
+      Note that we cannot assess absolute accuracy, only relative consistency!
+      Therefore, your contribution might be the most correct (even if it's not consistent with the others'), but there is no way for us to tell.
+    </p>
+    </div>
+  </div>
+
+  <div class="howto-content-container">
+    <div class="howto-text-content">
+    <h2>Final notes on the radargrams</h2>
+    <p>
+      <list>
+        <li>
+        All data are batch-processed with the same settings.
+        Some data will look great and some mediocre.
+        If they look really bad, a comment about it is appreciated!
+        </li>
+        <li>
+        Migration has not been applied, both to better identify temperate ice, and because the GPS data are sometimes quite bad.
+        </li>
+        <li>
+        Horizontal resampling (equidistant traces) has also not been applied due to the sometimes bad GPS data. Therefore, a few standstills exist in the data.
+        </li>
+
+      </list>
+
+    </p>
+    </div>
+  </div>
+  <div class="howto-content-container">
+    <div class="howto-text-content">
+    <h2>References for previous similar work.</h2>
+
+    <list>
+      <li><a href="https://doi.org/10.3189/S0022143000030495"><b>Björnsson et al. (1996)</b>: The thermal regime of sub-polar glaciers mapped by multi-frequency radio-echo sounding</a></li>
+      <li><a href="https://doi.org/10.3189/2015AoG70A953"><b>Gacitúa et al. (2015)</b>: 50 MHz helicopter-borne radar data for determination of glacier thermal regime in the central Chilean Andes</a></li>
+      <li><a href="https://doi.org/10.1029/2021JF006382"><b>Delf et al. (2022)</b>: Reanalysis of Polythermal Glacier Thermal Structure Using Radar Diffraction Focusing</a></li>
+    </list>
+    </div>
+  </div>
+  </div>
+
+{% endblock content %}

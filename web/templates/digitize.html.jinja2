@@ -1,0 +1,123 @@
+{% extends "base.html.jinja2" %}
+{% block extrahead %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='plugins/node_modules/leaflet/dist/leaflet.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='plugins/node_modules/leaflet-draw/dist/leaflet.draw.css') }}">
+
+    <meta name="radarkey" content="{{radar_key}}">
+    <title>Digitizing "{{radar_key}}" - {{base_title}}</title>
+{% endblock extrahead %}
+{% block content %}
+    <div class="header">
+        <a class="home-link" href="/#card-{{radar_key}}" id="home-button">Home</a>
+        <h1 class="header-title">{{base_title}}</h1>
+
+        <a href="/howto" class="index-instructions-link">Please read the instructions before starting!</a>
+
+        <p class="user-info">
+        {% if user != None %}
+            Logged in as <b>{{user}}</b>
+            <button id="logout-button">Log out</button>
+        {% else %}
+            Not logged in. Log in on the home page.
+        {% endif %}
+        </p>
+    </div>
+    <h1>Digitizing "{{radar_key}}"</h1>
+    <!--
+    <form id="name-form" onSubmit="return false;">
+        <label for="name">Name/alias:</label>
+        <input type="text" id="user-name" name="name">
+    </form>
+    -->
+    <div class="digitize-widgets-container">
+        <div class="digitize-widgets-item" style="max-width: 80 vw;flex: 1 1 auto;">
+            <div style="display: flex; flex-wrap: wrap; flex-direction: rows; width: 100%;">
+                <div class="digitize-widget-card" style="min-width: 50%;">
+                    <h3 style="margin-top: 5px;">Load / save / submit</h3>
+                    <button id="save-button" class="button">Save progress</button>
+                    <p>Load data: </p>
+                    <input type="file" id="load-button" accept=".json,application/json" style="max-width: 99%;">
+                
+                    <button id="submit-button" class="button submit-button">SUBMIT DATA</button>
+                </div>
+                <div class="digitize-widget-card">
+                    <h3 style="margin-top: 5px; margin-bottom: 5px;">Difficulty rating</h2>
+                    <form class="digitize-difficulty" id="digitize-difficulty-form">
+                        <p>How difficult was this radargram to interpret?</p>
+                        <label>
+                            <input type="radio" name="digitize-difficulty-choice" value="easy">
+                            Easy
+                        </label><br>
+                        <label>
+                            <input type="radio" name="digitize-difficulty-choice" value="medium">
+                            Medium
+                        </label><br>
+                        <label>
+                            <input type="radio" name="digitize-difficulty-choice" value="hard">
+                            Hard
+                        </label><br>
+                    </form>
+                </div>
+            </div>
+            <div class="digitize-widget-card" style="width: 100%;" id="response-text-div">
+                <h3 style="margin-top: 5px;">Message box</h3>
+                <p id="response-text"></p>
+            </div>
+        </div>
+        <!-- <button id="load-button">Load data</button> -->
+        <div class="digitize-widget-card">
+            <table>
+                <tr><th>Antenna</th><td>{{meta.antenna}}</td></tr>
+                <tr><th>Width (traces)</th><td>{{meta.width}}</td></tr>
+                <tr><th>Height (samples)</th><td>{{meta.height}}</td></tr>
+                <tr><th>Track length</th><td>{{meta.length_km_rounded}} km</td></tr>
+                <tr><th>Max TWT</th><td>{{meta.max_time}} ns</td></tr>
+                <tr><th>Max depth</th><td>{{meta.max_depth}} m</td></tr>
+                <tr><th>Vertical resolution</th><td>{{meta.depth_resolution_m}} m</td></tr>
+                <tr><th>Horizontal resolution</th><td>{{meta.trace_resolution_s}} s</td></tr>
+                <tr><th>Average speed</th><td>{{meta.average_speed}} m/s</td> </tr>
+            </table>
+        </div>
+
+        <div class="digitize-widget-card" style="min-height: 300px; max-width: 80vw; position: relative;">
+            <div id="overview-map"></div>
+            <p style="position: absolute; z-index: 1000; user-select: none; -webkit-user-select: none; pointer-events: none; font-size: 10pt; top: 5px; right: 15px;">Note: Map may be outdated.</p>
+        </div>
+
+    </div>
+
+    <div class="digitize-widgets-container">
+        <div class="digitize-widgets-item">
+        <!--
+            <div class="digitize-display-options-container" style="width: 100%;">
+        -->
+            <div class="digitize-widget-card" style="max-width: 150px;">
+                <p style="margin-top: 0px;">GPR display options</p>
+                <button id="display-abslog" class="button" style="margin-bottom: 5px;">Absolute</button>
+                <button id="display-classic" class="button">Classic</button>
+            </div>
+        </div>
+        <!--
+        </div>
+        -->
+        <div class="digitize-widget-card">
+            <form id="interp-class-select" style="width: 100%;"></form>
+        </div>
+        <div class="digitize-widget-card">
+            <form id="comment-form" onSubmit="return false;" style="width: 100%; display: flex; flex-direction: column;">
+                <label for="comment">Comment (registered when submitted)</label>
+                <textarea id="user-comment" name="comment" rows=6></textarea>
+            </form>
+        </div>
+    </div>
+
+    <div class="digitize-widget-card">
+        <div id="map"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='plugins/node_modules/leaflet/dist/leaflet.js') }}"></script>
+    <script src="{{ url_for('static', filename='plugins/node_modules/leaflet-draw/dist/leaflet.draw.js') }}"></script>
+    <script src="{{ url_for('static', filename='plugins/node_modules/leaflet-polylinedecorator/dist/leaflet.polylineDecorator.js') }}"></script>
+    <script src="{{ url_for('static', filename='base.js') }}"></script>
+    <script src="{{ url_for('static', filename='digitize.js') }}"></script>
+{% endblock content %}
