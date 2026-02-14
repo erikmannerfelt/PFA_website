@@ -528,7 +528,6 @@ def download_point_data():
                 continue
             if subdir[radar_key]["n_total_submissions"] == 0:
                 continue
-            print(radar_key)
             data = interpretations.read_interpretations(radar_key, 5.)
 
             all_data.append(data)

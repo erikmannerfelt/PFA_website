@@ -17,13 +17,13 @@ import paths
 CACHE_PATH = Path("cache/") / "radargrams"
 
 
-def normalize(data: np.ndarray, gain_strength: float = 0.02):
+def normalize(data: np.ndarray, contrast: float = 0.9):
     data_abs = np.abs(data)
-    minval_abs, maxval_abs = np.percentile(np.abs(data_abs[50:]), [1, 97])
-    data_abs = np.clip((data - minval_abs) / (maxval_abs - minval_abs), 0, 1)
+    minval_abs, maxval_abs = np.percentile(np.abs(data_abs[50:]), [1, 99])
+    data_abs = np.clip(contrast * (data - minval_abs) / (maxval_abs - minval_abs), 0, 1)
     maxval = np.percentile(np.abs(data[50:]), 99)
     minval = -maxval
-    data = np.clip((data - minval) / (maxval - minval), 0, 1)
+    data = np.clip(contrast * (data - minval) / (maxval - minval), 0, 1)
 
     return {
         "classic": (data * 255).astype("uint8"),

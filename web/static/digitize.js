@@ -1,20 +1,20 @@
 function get_layer_classes() {
   let props = {
-    bed_cold: {
-      name: "Glacier bed (no temperate ice)",
-      color: "#002EBD", // Blue
-    },
-    temperate: {
-      name: "Temperate ice",
-      color: "red",
-    },
-    bed_unspecified: {
-      name: "Glacier bed",
+    // bed_cold: {
+    //   name: "Glacier bed (no temperate ice)",
+    //   color: "#002EBD", // Blue
+    // },
+    water_table: {
+      name: "Water table",
       color: "#CE00FF", // Purple/pink
     },
-    bed_missing: {
-      name: "Glacier bed not visible",
+    crevasse: {
+      name: "Crevasse",
       color: "#62F700", // Neon green
+    },
+    hyperbola: {
+      name: "Hyperbola",
+      color: "red",
     },
   };
 
@@ -90,7 +90,7 @@ function make_color_selector() {
     item.name = "key";
     item.value = key;
 
-    if (key == "bed_unspecified") {
+    if (key == "water_table") {
       item.checked = true;
     }
     var patch = document.createElement("span");

@@ -7,7 +7,7 @@ async function set_progress(n_radargrams_done, n_total_radargrams) {
   let percentageElement = document.getElementById("progress-percentage");
   let progress_text_element = document.getElementById("progress-text");
 
-  let contribution_threshold = 8;
+  let contribution_threshold = 0;
 
   let mission_points =
     n_radargrams_done < contribution_threshold

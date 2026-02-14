@@ -401,11 +401,11 @@ def read_interpretations(radar_key: str, step_m: float) -> pd.DataFrame:
 
     data = gpd.GeoDataFrame(data.reset_index(), geometry=gpd.points_from_xy(data["easting"].values, data["northing"].values, crs=crs))
 
-    # if crs != "EPSG:32633":
-    #     points = gpd.points_from_xy(data["easting"], data["northing"], crs=crs).to_crs(32633)
-    #     data["easting"] = points.x
-    #     data["northing"] = points.y
-
+    if crs != "EPSG:32633":
+        data = data.to_crs(32633)
+        data["easting"] = data.geometry.x
+        data["northing"] = data.geometry.y
+        
     data["antenna"] = antenna
     data["year"] = radar_key.split("-")[2]
     data["glacier"] = radar_key.split("-")[0]
