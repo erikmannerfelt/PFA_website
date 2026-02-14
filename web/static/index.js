@@ -70,6 +70,8 @@ async function setup_map() {
 
               let item = document.getElementById(`li-${glacier_key}`);
 
+              console.log(item);
+
               let parts = item.innerText.split("=");
               let n_total = parts[parts.length - 1];
 

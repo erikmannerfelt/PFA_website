@@ -32,7 +32,7 @@ def normalize(data: np.ndarray, gain_strength: float = 0.02):
 
 
 def get_radargram_cache_dirs(src_filepath: Path) -> tuple[Path, Path]:
-    filename_for_key = "/".join(src_filepath.parts[-3:])
+    filename_for_key = src_filepath.stem
     with xr.open_dataset(src_filepath) as data:
         checksum = hashlib.md5(
             (filename_for_key + data.attrs["processing-datetime"]).encode()
@@ -51,10 +51,11 @@ def parse_radargram(
 ) -> dict[str, object]:
     src_filepath = Path(src_filepath)
 
-    radar_key = "-".join(src_filepath.with_suffix("").parts[-3:])
+    # radar_key = "-".join(src_filepath.with_suffix("").parts[-3:])
+    radar_key = src_filepath.stem
     # static_dir = (Path("static/radargrams/") / "/".join(src_filepath.parts[-3:])).with_suffix("")
     static_dir, cache_dir = get_radargram_cache_dirs(src_filepath)
-    static_base_part = str(static_dir.parents[4])
+    static_base_part = str(static_dir.parents[2])
 
     meta_cache_path = cache_dir / "meta.json"
     # These are run with slower settings and need stretching to be usable.
@@ -298,12 +299,18 @@ def parse_all_radargrams(progress: bool = False, redo_cache: bool = False):
         for glacier_dir in glacier_dirs:
             if not glacier_dir.is_dir():
                 continue
-            radargrams[glacier_dir.stem] = {}
-            for filepath in glacier_dir.rglob("*.nc"):
-                progress_bar.set_description("/".join(filepath.parts[-3:]))
-                radargram = parse_radargram(filepath, override_cache=redo_cache)
-                radargrams[glacier_dir.stem][radargram["radar_key"]] = radargram
-            progress_bar.update()
+
+            for year_dir in glacier_dir.iterdir():
+                if not year_dir.is_dir():
+                    continue
+
+                key = f"{glacier_dir.stem} {year_dir.stem}"
+                radargrams[key] = {}
+                for filepath in year_dir.rglob("*.nc"):
+                    progress_bar.set_description("/".join(filepath.parts[-3:]))
+                    radargram = parse_radargram(filepath, override_cache=redo_cache)
+                    radargrams[key][radargram["radar_key"]] = radargram
+                progress_bar.update()
 
     return radargrams
 

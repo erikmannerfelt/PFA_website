@@ -21,9 +21,14 @@ def static_dir_path() -> Path:
 
 
 def processed_radar_path(radar_key: str) -> Path:
-    glacier, date_str, file_stem = radar_key.split("-")
+    glacier = radar_key.split("-")[0]
 
-    return _processed_radar_dir_path() / f"{glacier}/{date_str}/{file_stem}.nc"
+    for filepath in (_processed_radar_dir_path() / glacier).rglob(f"*{radar_key}.nc"):
+        return filepath
+
+    raise ValueError(f"Could not find {radar_key}.nc")
+
+    # return _processed_radar_dir_path() / f"{glacier}/{date_str}/{file_stem}.nc"
 
 
 def get_all_interpreted_radargrams() -> list[str]:

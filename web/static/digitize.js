@@ -648,9 +648,9 @@ async function setup_map() {
     }
   }
   let track_interval_colors = [
+    "red",
     "black",
     "green",
-    "red",
     "purple",
     "orange",
     "blue",
@@ -702,7 +702,7 @@ async function setup_map() {
       for (
         let time = 0;
         time <= time_interval * (pair[1] - pair[0]);
-        time += 250
+        time += 100
       ) {
         let icon = L.divIcon({
           html: `<span class="xlabel">${time}s</span>`,
@@ -742,8 +742,8 @@ async function setup_map() {
       { color: "black", interactive: false }
     ).addTo(map);
 
-    // Add labels
-    for (let depth = 0; depth <= meta["max_depth"]; depth += 50) {
+    // Add y labels
+    for (let depth = 0; depth <= meta["max_depth"]; depth += 10) {
       let y_px = depth * (meta["height"] / meta["max_depth"]);
 
       let icon = L.divIcon({
@@ -791,9 +791,10 @@ async function setup_map() {
   });
 
   let overview_map = L.map("overview-map", {
-    maxZoom: 15,
+    maxZoom: 17,
     minZoom: 3,
   });
+
 
   meta["track"].forEach(function (track_json, _) {
     let i = track_json.properties.i;
@@ -826,6 +827,34 @@ async function setup_map() {
         ],
       }).addTo(overview_map);
     });
+  });
+
+  fetch("/all_radargrams.json")
+    .then((response) => response.json())
+    .then(function (all_radargrams) {
+      for (radar_key in all_radargrams) {
+        if (radar_key == meta["radar_key"]) {
+          continue;
+        }
+        // Filter by those that start with the same three parts (e.g. amundsenisen-profile-2025).
+        if (radar_key.split("-").slice(0, 3).join("-") != meta["radar_key"].split("-").slice(0, 3).join("-")) {
+          continue;
+        };
+        fetch(`/radargram_meta/${radar_key}.json`).then((response) => response.json()).then(function (other_meta) {
+
+          other_meta["track"].forEach(function (track_json, _) {
+            L.geoJSON(track_json, {
+              color: "#ccc",
+              opacity: 0.5,
+            })
+              .bindPopup(function (_) {
+                return `<a href=/digitize/${other_meta.radar_key} target="_blank">${other_meta.radar_key} </a>`
+              })
+              .addTo(overview_map);
+          });
+        });
+
+      };
   });
 
   L.tileLayer(

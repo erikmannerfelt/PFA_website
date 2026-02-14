@@ -9,6 +9,8 @@ import string
 import threading
 from pathlib import Path
 from typing import Callable
+import zipfile
+import io
 
 import dotenv
 import flask
@@ -259,16 +261,24 @@ def get_n_user_submissions():
         return flask.jsonify(None)
 
     all_submissions = SUBMISSIONS.get_all_user_submissions(username=username)
+    all_radargrams = get_all_radargrams(username=username)
+
     out = {
         "per_radar_key": {},
         "per_glacier": {},
     }
+
+    for glacier_key in all_radargrams:
+        out["per_glacier"][glacier_key] = all_radargrams[glacier_key]["_meta"]["n_done_by_user"]
+        # print()
+
+
     for radar_key in all_submissions:
         glacier_key = radar_key.split("-")[0]
 
-        if glacier_key not in out["per_glacier"]:
-            out["per_glacier"][glacier_key] = 0
-        out["per_glacier"][glacier_key] += 1
+        # if glacier_key not in out["per_glacier"]:
+        #     out["per_glacier"][glacier_key] = 0
+        # out["per_glacier"][glacier_key] += 1
 
         out["per_radar_key"][radar_key] = len(all_submissions[radar_key])
 
@@ -356,7 +366,14 @@ def all_radargrams():
 @APP.route("/radargram_meta/<radar_key>.json")
 def radargram_meta(radar_key: str):
     try:
-        return flask.jsonify(get_all_radargrams(get_username() or "")[radar_key.split("-")[0]][radar_key])
+        all_radargrams = get_all_radargrams(get_username() or "")
+        for subdict in all_radargrams.values():
+            if radar_key in subdict:
+                meta = subdict[radar_key]
+                break
+        else:
+            raise ValueError(f"{radar_key} not found")
+        return flask.jsonify(meta)
     except KeyError:
         return flask.jsonify({"error": "Key not valid"}), 400
 
@@ -410,9 +427,16 @@ def index():
 
 
 @APP.route("/digitize/<radar_key>")
+@flask_login.login_required
 def radargram(radar_key: str):
     all_radargrams = get_all_radargrams(get_username() or "")
-    meta = all_radargrams[radar_key.split("-")[0]][radar_key]
+    for subdict in all_radargrams.values():
+        if radar_key in subdict:
+            meta = subdict[radar_key]
+            break
+    else:
+        raise ValueError(f"{radar_key} not found")
+    # meta = all_radargrams[radar_key.split("-")[0]][radar_key]
     user = get_username()
 
     return flask.render_template("digitize.html.jinja2", meta=meta, radar_key=radar_key, user=user)
@@ -467,6 +491,59 @@ def submit_digitized():
     except Exception as exception:
         print(f"Exception when user submitted json: {str(exception)}")
         return flask.jsonify({"error": "Internal error occurred"}, 500)
+
+
+@APP.route("/download_submissions")
+@flask_login.login_required
+def download_submissions():
+    user = get_username()
+    if user not in ["admin", "satu"]:
+        return "Unauthorized", 401
+
+    zip_bytes = io.BytesIO()
+    with zipfile.ZipFile(zip_bytes, "w") as zip_file:
+        for filepath in get_submitted_path().rglob("*.json"):
+            zip_file.write(filepath)
+
+    zip_bytes.seek(0)
+    date_str = datetime.datetime.now().isoformat()[:19].replace("-","").replace(":", "")
+    return flask.send_file(zip_bytes, mimetype="file/csv", as_attachment=True, download_name=f"submissions-{date_str}.zip")
+
+
+@APP.route("/download_interpretations")
+@flask_login.login_required
+def download_point_data():
+    user = get_username()
+    if user not in ["admin", "satu"]:
+        return "Unauthorized", 401
+    import interpretations
+    import pandas as pd
+
+    all_radargrams = get_all_radargrams(user)
+
+    all_data = []
+    for subdir in all_radargrams.values():
+        for radar_key in subdir:
+            if radar_key == "_meta":
+                continue
+            if subdir[radar_key]["n_total_submissions"] == 0:
+                continue
+            print(radar_key)
+            data = interpretations.read_interpretations(radar_key, 5.)
+
+            all_data.append(data)
+
+    all_data = pd.concat(all_data)
+
+    out = io.BytesIO()
+    all_data.to_file(out, driver="GeoJSON")
+    zip_bytes = io.BytesIO()
+    with zipfile.ZipFile(zip_bytes, "w") as zip_file:
+        zip_file.writestr("interpretations.geojson", out.getvalue())
+
+    zip_bytes.seek(0)
+    date_str = datetime.datetime.now().isoformat()[:19].replace("-","").replace(":", "")
+    return flask.send_file(zip_bytes, mimetype="file/csv", as_attachment=True, download_name=f"interpretations-{date_str}.zip")
 
 
 @APP.route("/howto")
