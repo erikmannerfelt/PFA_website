@@ -582,9 +582,7 @@ def main(debug: bool = False):
     USER_DATA.update(dict(zip(usernames, pwds, strict=True)))
     SUBMISSIONS._refresh()
 
-    port = 5000
-    if "yggdrasil" in socket.gethostname():
-        port = 8081
+    port = 8081
 
     if debug:
         APP.run(debug=True)
