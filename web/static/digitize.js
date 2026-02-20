@@ -876,6 +876,35 @@ async function setup_map() {
   ];
   overview_map.fitBounds(overview_bounds);
 
+
+  // Add a marker on the overview map that indicates where the cursor is
+  let x_marker = L.circleMarker([0, 0], {
+    color: "red",
+    radius: 5,
+  })
+    .addTo(overview_map);
+  map.on("mousemove", function (event) {
+    let y = event.latlng.lat;
+    let x = event.latlng.lng;
+
+    if ((x < 0) | (x > meta["width"]) | (y < 0) | (y > meta["height"])) {
+      return;
+    };
+
+    let start_i = 0;
+    for (track of meta["track"]) {
+      let length = track["properties"]["n_traces"];
+      if (x > (length + start_i)) {
+        start_i += length;
+        continue;
+      }
+      let track_pt = track["geometry"]["coordinates"][Math.floor((x - start_i) * track["geometry"]["coordinates"].length / length)]
+      x_marker.setLatLng([track_pt[1], track_pt[0]]); 
+      return;
+    }
+  });
+
+
   document.getElementById("save-button").onclick = function (event) {
     if (drawn_items.getLayers().length == 0) {
       document.getElementById("response-text").innerText =
