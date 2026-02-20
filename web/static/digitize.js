@@ -743,11 +743,13 @@ async function setup_map() {
     ).addTo(map);
 
     // Add y labels
-    for (let depth = 0; depth <= meta["max_depth"]; depth += 10) {
-      let y_px = depth * (meta["height"] / meta["max_depth"]);
+    for (let depth = 0; depth <= meta["max_time"]; depth += 50) {
+      let y_px = depth * (meta["height"] / meta["max_time"]);
+
+      let depth_str = (depth % 100 == 0) ? `${depth}ns` : "—";
 
       let icon = L.divIcon({
-        html: `<span class="ylabel-${side}">${depth}m</span>`,
+        html: `<span class="ylabel-${side}">${depth_str}</span>`,
         iconSize: "auto",
       });
       L.marker([meta["height"] - y_px, x], {
