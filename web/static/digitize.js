@@ -1,9 +1,9 @@
 function get_layer_classes() {
   let props = {
-    // bed_cold: {
-    //   name: "Glacier bed (no temperate ice)",
-    //   color: "#002EBD", // Blue
-    // },
+    firn_ice_interface: {
+      name: "Firn-ice interface",
+      color: "#002EBD", // Blue
+    },
     water_table: {
       name: "Water table",
       color: "#CE00FF", // Purple/pink
