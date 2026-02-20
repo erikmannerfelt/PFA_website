@@ -347,6 +347,28 @@ def get_all_radargrams(username: str):
     return radargrams
 
 
+@APP.route("/location_info/<location>.json")
+def location_info(location: str):
+    location = location.replace("_", " ")
+    radar_meta = get_all_radargrams("")[location]
+
+    bounds = {"maxlat": 0, "minlat": 999, "minlon": 999, "maxlon": 0}
+
+    radar_keys = []
+    for key, meta in radar_meta.items():
+        if key == "_meta":
+            continue
+
+        radar_keys.append(key)
+        for key2 in bounds:
+            if "max" in key2:
+                bounds[key2] = max(bounds[key2], meta["bounds"][key2])
+            else:
+                bounds[key2] = min(bounds[key2], meta["bounds"][key2])
+
+    return flask.jsonify({"bounds": bounds,"radar_keys": radar_keys})
+    
+
 @APP.route("/all_radargrams.json")
 def all_radargrams():
     radargrams = {}

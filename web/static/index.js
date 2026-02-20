@@ -143,6 +143,54 @@ async function setup_map() {
   // }
 }
 
+function create_map(map_id) {
+  let overview_map = L.map(map_id, {
+    maxZoom: 17,
+    minZoom: 3,
+  });
+
+  let location_key = map_id.replace("map-", "").replace(" ", "_");
+
+  fetch(`/location_info/${location_key}.json`)
+    .then((response) => response.json())
+    .then(function (location_info) {
+      for (radar_key of location_info["radar_keys"]) {
+        fetch(`/radargram_meta/${radar_key}.json`).then((response) => response.json()).then(function (other_meta) {
+
+          other_meta["track"].forEach(function (track_json, _) {
+            L.geoJSON(track_json, {
+              color: "#ccc",
+              opacity: 0.5,
+            })
+              .bindPopup(function (_) {
+                return `<a href=/digitize/${other_meta.radar_key} target="_blank">${other_meta.radar_key} </a>`
+              })
+              .addTo(overview_map);
+          });
+        });
+      let overview_bounds = [
+        [location_info["bounds"]["minlat"], location_info["bounds"]["minlon"]],
+        [location_info["bounds"]["maxlat"], location_info["bounds"]["maxlon"]],
+      ];
+      overview_map.fitBounds(overview_bounds);
+
+
+      };
+  });
+
+  L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      bounds: [
+        [-90, -180],
+        [90, 180],
+      ],
+      noWrap: true,
+    }
+  ).addTo(overview_map);
+
+}
+
 async function main() {
   await setup_map();
 }

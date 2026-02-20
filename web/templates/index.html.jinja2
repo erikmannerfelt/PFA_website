@@ -1,6 +1,7 @@
 {% extends "base.html.jinja2" %}
 {% block extrahead %}
     <title>Home - {{base_title}}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='plugins/node_modules/leaflet/dist/leaflet.css') }}">
 {% endblock extrahead %}
 
 {% macro radargram(radar_key, values, addref=True) %}
@@ -22,6 +23,8 @@
 {% endmacro %}
 
 {% block content %}
+    <script src="{{ url_for('static', filename='index.js') }}"></script>
+    <script src="{{ url_for('static', filename='plugins/node_modules/leaflet/dist/leaflet.js') }}"></script>
 
     <div class="header">
         <h1 class="header-title">{{base_title}}</h1>
@@ -132,6 +135,13 @@
                             </div>
                         </div>
                     {% endif %}
+
+                    <div style="min-height: 500px; min-width: 300px;" id="map-{{glacier_key}}"</div>
+                    <script>
+                    create_map("map-{{glacier_key}}");
+                    </script>
+
+                </div>
                 </div>
             </div>
         {% endfor %}
@@ -139,5 +149,4 @@
         Please log in to see the data!
 
     {% endif %}
-    <script src="{{ url_for('static', filename='index.js') }}"></script>
 {% endblock content %}
