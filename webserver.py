@@ -323,7 +323,8 @@ def get_all_radargrams(username: str):
             k: v
             for k, v in sorted(
                 radargrams[glacier_key].items(),
-                key=lambda item: item[1]["n_total_submissions"],
+                # key=lambda item: item[1]["n_total_submissions"],
+                key=lambda item: item[0],
             )
         }
         radargrams[glacier_key]["_meta"].update(
@@ -337,10 +338,8 @@ def get_all_radargrams(username: str):
         k: v
         for k, v in sorted(
             radargrams.items(),
-            # I'm setting Drønbreen to be the last one because it's so big.
-            key=lambda item: 9999
-            if item[0] == "dronbreen"
-            else (item[1]["_meta"]["n_total_submissions"] / max(1, len(item[1]) - 1)),
+            # key=lambda item: (item[1]["_meta"]["n_total_submissions"] / max(1, len(item[1]) - 1)),
+            key= lambda item: item[0],
         )
     }
 
