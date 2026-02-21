@@ -584,3 +584,38 @@ tr:hover {
   font-weight: bold;
   z-index: 1;
 }
+
+.index-location-container {
+  display: flex;
+}
+
+/* Shared styles for both boxes */
+.index-location-container>.index-location-box {
+  box-sizing: border-box;
+  /* optional:
+  padding: 1rem;
+  border: 1px solid #ddd;
+  */
+}
+
+/* Left / primary: 60% */
+.index-location-container>.index-location-primary {
+  flex: 0 0 60%;
+}
+
+/* Right / secondary: 40% */
+.index-location-container>.index-location-secondary {
+  flex: 0 0 40%;
+}
+
+/* Stack on narrow screens */
+@media (max-width: 1000px) {
+  .index-location-container {
+    flex-direction: column;
+  }
+
+  .index-location-container>.index-location-box {
+    flex: 0 0 auto;
+    width: 100%;
+  }
+}

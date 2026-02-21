@@ -81,7 +81,7 @@
 
         <div class="digitize-widget-card" style="min-height: 300px; max-width: 80vw; position: relative;">
             <div id="overview-map"></div>
-            <p style="position: absolute; z-index: 1000; user-select: none; -webkit-user-select: none; pointer-events: none; font-size: 10pt; top: 5px; right: 15px;">Note: Map may be outdated.</p>
+            <p style="position: absolute; z-index: 400; user-select: none; -webkit-user-select: none; pointer-events: none; font-size: 10pt; top: 5px; right: 30%;">Note: Map may be outdated.<br>Other lines only from the same year.</p>
         </div>
 
     </div>
@@ -119,5 +119,6 @@
     <script src="{{ url_for('static', filename='plugins/node_modules/leaflet-draw/dist/leaflet.draw.js') }}"></script>
     <script src="{{ url_for('static', filename='plugins/node_modules/leaflet-polylinedecorator/dist/leaflet.polylineDecorator.js') }}"></script>
     <script src="{{ url_for('static', filename='base.js') }}"></script>
+    <script src="{{ url_for('static', filename='overview_map.js') }}"></script>
     <script src="{{ url_for('static', filename='digitize.js') }}"></script>
 {% endblock content %}

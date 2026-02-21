@@ -792,11 +792,7 @@ async function setup_map() {
     data_saved = false;
   });
 
-  let overview_map = L.map("overview-map", {
-    maxZoom: 17,
-    minZoom: 3,
-  });
-
+  let overview_map =add_overview_map("overview-map", fit_bounds=false, radar_key=meta["radar_key"]);
 
   meta["track"].forEach(function (track_json, _) {
     let i = track_json.properties.i;
@@ -858,17 +854,6 @@ async function setup_map() {
 
       };
   });
-
-  L.tileLayer(
-    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    {
-      bounds: [
-        [-90, -180],
-        [90, 180],
-      ],
-      noWrap: true,
-    }
-  ).addTo(overview_map);
 
   let overview_bounds = [
     [meta["bounds"]["minlat"], meta["bounds"]["minlon"]],
