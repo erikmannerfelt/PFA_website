@@ -54,8 +54,11 @@ def get_latest_submissions(radar_key: str) -> list[Path]:
         if not radar_key_dir.is_dir():
             continue
 
-        interp = sorted(radar_key_dir.glob("*.json"))[-1]
+        interp = list(sorted(radar_key_dir.glob("*.json")))
 
-        interpretations.append(interp)
+        if len(interp) == 0:
+            continue
+
+        interpretations.append(interp[-1])
 
     return interpretations
