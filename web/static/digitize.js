@@ -16,6 +16,18 @@ function get_layer_classes() {
       name: "Hyperbola",
       color: "red",
     },
+    superimposed_ice: {
+      name: "Superimposed ice",
+      color: "#e6e600", // Yellow
+    },
+    other1: {
+      name: "Other (1)",
+      color: "#ffa31a", // Orange
+    },
+    other2: {
+      name: "Other (2)",
+      color: "#33cccc", // Dark cyan 
+    },
   };
 
   for (key in props) {

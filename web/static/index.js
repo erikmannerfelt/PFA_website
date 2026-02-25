@@ -84,7 +84,7 @@ async function setup_map() {
               }
             }
 
-            set_progress(n_total_submissions, n_total_radargrams);
+            // set_progress(n_total_submissions, n_total_radargrams);
           }
           for (let card of document.getElementsByClassName("index-card")) {
             let radar_key = card.id.replace("card-", "");

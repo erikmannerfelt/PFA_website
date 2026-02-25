@@ -1,2 +1,4 @@
 satu
 admin
+rickard
+ward
