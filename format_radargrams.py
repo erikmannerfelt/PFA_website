@@ -309,6 +309,7 @@ def parse_all_radargrams(progress: bool = False, redo_cache: bool = False):
                 for filepath in year_dir.rglob("*.nc"):
                     progress_bar.set_description("/".join(filepath.parts[-3:]))
                     radargram = parse_radargram(filepath, override_cache=redo_cache)
+                    radargram["antenna"] = radargram["antenna"].encode(errors="ignore").decode()
                     radargrams[key][radargram["radar_key"]] = radargram
                 progress_bar.update()
 
