@@ -40,6 +40,11 @@
                 
                     <button id="submit-button" class="button submit-button">SUBMIT DATA</button>
                 </div>
+                <div class="digitize-widget-card" style="max-width: 150px;">
+                    <p style="margin-top: 0px;">GPR display options</p>
+                    <button id="display-abslog" class="button" style="margin-bottom: 5px;">Absolute</button>
+                    <button id="display-classic" class="button">Classic</button>
+                </div>
                 <div class="digitize-widget-card" style="display: none;">
                     <h3 style="margin-top: 5px; margin-bottom: 5px;">Difficulty rating</h2>
                     <form class="digitize-difficulty" id="digitize-difficulty-form">
@@ -65,18 +70,23 @@
             </div>
         </div>
         <!-- <button id="load-button">Load data</button> -->
-        <div class="digitize-widget-card">
-            <table>
-                <tr><th>Antenna</th><td>{{meta.antenna}}</td></tr>
-                <tr><th>Width (traces)</th><td>{{meta.width}}</td></tr>
-                <tr><th>Height (samples)</th><td>{{meta.height}}</td></tr>
-                <tr><th>Track length</th><td>{{meta.length_km_rounded}} km</td></tr>
-                <tr><th>Max TWT</th><td>{{meta.max_time}} ns</td></tr>
-                <tr><th>Max depth (assuming 0.2 m/ns)</th><td>{{meta.max_depth}} m</td></tr>
-                <tr><th>Vertical resolution</th><td>{{meta.depth_resolution_m}} m</td></tr>
-                <tr><th>Horizontal resolution</th><td>{{meta.trace_resolution_s}} s</td></tr>
-                <tr><th>Average speed</th><td>{{meta.average_speed}} m/s</td> </tr>
-            </table>
+        <div>
+            <div class="digitize-widget-card">
+                <table>
+                    <tr><th>Antenna</th><td>{{meta.antenna}}</td></tr>
+                    <tr><th>Width (traces)</th><td>{{meta.width}}</td></tr>
+                    <tr><th>Height (samples)</th><td>{{meta.height}}</td></tr>
+                    <tr><th>Track length</th><td>{{meta.length_km_rounded}} km</td></tr>
+                    <tr><th>Max TWT</th><td>{{meta.max_time}} ns</td></tr>
+                    <tr><th>Max depth (assuming 0.2 m/ns)</th><td>{{meta.max_depth}} m</td></tr>
+                    <tr><th>Vertical resolution</th><td>{{meta.depth_resolution_m}} m</td></tr>
+                    <tr><th>Horizontal resolution</th><td>{{meta.trace_resolution_s}} s</td></tr>
+                    <tr><th>Average speed</th><td>{{meta.average_speed}} m/s</td> </tr>
+                </table>
+            </div>
+            <div class="digitize-widget-card">
+                <form id="interp-class-select" style="width: 100%;"></form>
+            </div>
         </div>
 
         <div class="digitize-widget-card" style="min-height: 300px; max-width: 80vw; position: relative;">
@@ -86,30 +96,22 @@
 
     </div>
 
-    <div class="digitize-widgets-container">
-        <div class="digitize-widgets-item">
-        <!--
-            <div class="digitize-display-options-container" style="width: 100%;">
-        -->
-            <div class="digitize-widget-card" style="max-width: 150px;">
-                <p style="margin-top: 0px;">GPR display options</p>
-                <button id="display-abslog" class="button" style="margin-bottom: 5px;">Absolute</button>
-                <button id="display-classic" class="button">Classic</button>
-            </div>
-        </div>
-        <!--
-        </div>
-        -->
-        <div class="digitize-widget-card">
-            <form id="interp-class-select" style="width: 100%;"></form>
-        </div>
-        <div class="digitize-widget-card">
-            <form id="comment-form" onSubmit="return false;" style="width: 100%; display: flex; flex-direction: column;">
-                <label for="comment">Comment (registered when submitted)</label>
-                <textarea id="user-comment" name="comment" rows=6></textarea>
-            </form>
-        </div>
-    </div>
+    {# <div class="digitize-widgets-container"> #}
+        {# <div class="digitize-widgets-item"> #}
+        {# <!-- #}
+            {# <div class="digitize-display-options-container" style="width: 100%;"> #}
+        {# --> #}
+        {# </div> #}
+        {# <!-- #}
+        {# </div> #}
+        {# --> #}
+        {# <div class="digitize-widget-card"> #}
+            {# <form id="comment-form" onSubmit="return false;" style="width: 100%; display: flex; flex-direction: column;"> #}
+                {# <label for="comment">Comment (registered when submitted)</label> #}
+                {# <textarea id="user-comment" name="comment" rows=6></textarea> #}
+            {# </form> #}
+        {# </div> #}
+    {# </div> #}
 
     <div class="digitize-widget-card">
         <div id="map"></div>

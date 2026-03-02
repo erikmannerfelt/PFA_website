@@ -2,3 +2,4 @@ satu
 admin
 rickard
 ward
+thomasfrank
