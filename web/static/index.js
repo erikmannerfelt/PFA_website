@@ -143,6 +143,40 @@ async function setup_map() {
   // }
 }
 
+// Lazy add all overview maps
+document.addEventListener('DOMContentLoaded', function () {
+  const mapElements = document.querySelectorAll('.lazy-map');
+
+  // If there are no lazy maps on this page, do nothing.
+  if (!mapElements.length) return;
+
+  // Fallback: no IntersectionObserver => load all maps immediately
+  if (!('IntersectionObserver' in window)) {
+    mapElements.forEach(el => add_overview_map(el.id));
+    return;
+  }
+
+  const observer = new IntersectionObserver((entries, obs) => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+
+      const el = entry.target;
+
+      if (!el.dataset.mapInitialized) {
+        add_overview_map(el.id);
+        el.dataset.mapInitialized = '1';
+      }
+
+      obs.unobserve(el);
+    });
+  }, {
+    root: null,
+    threshold: 0.1
+  });
+
+  mapElements.forEach(el => observer.observe(el));
+});
+
 async function main() {
   await setup_map();
 }
