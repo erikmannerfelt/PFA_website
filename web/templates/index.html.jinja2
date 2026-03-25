@@ -97,10 +97,11 @@
         {% endif %}
         {% for glacier_key, glacier_radargrams in all_radargrams.items() %}
             <div class="index-location-group" id="group-{{glacier_key}}">
-                <h2 class="index-location-title">Glacier: {{glacier_radargrams._meta.nice_name}}</h2>
+                <h2 class="index-location-title">Glacier: {{glacier_radargrams._meta.nice_name}} (n={{glacier_radargrams | length - 1}})</h2>
+                <button id="toggle-{{glacier_key}}" onclick="toggle_container_vis('{{glacier_key}}')" class="button">Show all</button>
                 <p>This glacier has a total of {{glacier_radargrams._meta.n_total_submissions}}  {{"submission" if glacier_radargrams._meta.n_total_submissions == 1 else "submissions"}}</p>
                 <div class="index-location-container">
-                    <div class="index-location-box index-location-primary">
+                    <div class="index-location-box index-location-primary is-hidden" id="index-container-{{glacier_key}}">
 
                         {% set parts = namespace(finished=[], unfinished=[]) %}
                         {% for k, v in glacier_radargrams.items() %}

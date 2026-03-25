@@ -1,3 +1,16 @@
+function toggle_container_vis(glacier_key) {
+
+  let container = document.getElementById(`index-container-${glacier_key}`);
+  let button = document.getElementById(`toggle-${glacier_key}`);
+
+  if (container.classList.contains("is-hidden")) {
+    button.innerText = "Hide all";
+  } else {
+    button.innerText = "Show all";
+  };
+  container.classList.toggle("is-hidden");
+};
+
 async function set_progress(n_radargrams_done, n_total_radargrams) {
   let progress = n_radargrams_done / n_total_radargrams;
 
