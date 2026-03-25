@@ -1,4 +1,3 @@
-
 function add_overview_map(map_id, fit_bounds = true, radar_key = null) {
 
   let overview_map = L.map(map_id, {
@@ -77,8 +76,18 @@ function add_overview_map(map_id, fit_bounds = true, radar_key = null) {
       lyr.addTo(overview_map);
     };
   };
-  L.control.layers({"ESRI": esri}, overlays, {collapsed: true}).addTo(overview_map);
+  let control = L.control.layers({"ESRI": esri}, overlays, {collapsed: true}).addTo(overview_map);
+  fetch("https://static.livingiceproject.com/shapes/mass_balance_stakes_2024.geojson")
+    .then((response) => response.json())
+    .then(function (stakes) {
+
+      control.addOverlay(L.geoJSON(stakes,{
+
+      }).bindPopup(function (layer) {
+          console.log(layer);
+          return layer.feature.properties.Stake;
+      }), "Mass balance stakes");
+    });
 
   return overview_map;
-
 }
