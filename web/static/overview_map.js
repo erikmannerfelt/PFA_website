@@ -24,14 +24,27 @@ function add_overview_map(map_id, fit_bounds = true, radar_key = null) {
         fetch(`/radargram_meta/${radar_key2}.json`).then((response) => response.json()).then(function (other_meta) {
 
           other_meta["track"].forEach(function (track_json, _) {
-            L.geoJSON(track_json, {
-              color: "#ccc",
-              opacity: 0.5,
-            })
+            const orig_style = {color: "#ccc", opacity: 0.5};
+            let feature = L.geoJSON(track_json, orig_style)
               .bindPopup(function (_) {
-                return `<a href=/digitize/${other_meta.radar_key} target="_blank">${other_meta.radar_key} </a>`
+                let link = document.createElement("a");
+                link.href = `/digitize/${other_meta.radar_key}`
+                link.innerHTML = `<p>${other_meta.radar_key}</p><img src="/static/radargrams/${other_meta.radar_key}/thumbnail.jpg" style="width: 100%;"></img>`;
+
+                link.target = "_blank";
+                return link;
               })
               .addTo(overview_map);
+
+            feature.on("popupopen", () => {
+              feature.setStyle({
+                color: "#f93",
+                opacity: 0.9,
+              });
+            });
+            feature.on("popupclose", () => {
+              feature.setStyle(orig_style);
+            });
           });
         });
 

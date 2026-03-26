@@ -623,3 +623,10 @@ tr:hover {
 .is-hidden {
   display: none !important;
 }
+
+.leaflet-container .leaflet-popup-content-wrapper,
+.leaflet-container .leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(3px);
+
+}
