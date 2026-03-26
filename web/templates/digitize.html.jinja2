@@ -33,17 +33,34 @@
         <div class="digitize-widgets-item" style="max-width: 80 vw;flex: 1 1 auto;">
             <div style="display: flex; flex-wrap: wrap; flex-direction: rows; width: 100%;">
                 <div class="digitize-widget-card" style="min-width: 50%;">
-                    <h3 style="margin-top: 5px;">Load / save / submit</h3>
+                    {# <h3 style="margin-top: 5px;">Load / save / submit</h3> #}
+                    <button id="digitizeTableOpenModal" class="button" style="background-color: #ccf; margin-bottom: 5px;">Show GPR metadata</button>
+  
+                    <div id="digitizeTableOverlay" class="digitize-modal-overlay">
+                      <div class="digitize-modal">
+                        <button id="digitizeTableCloseModal" class="digitize-modal-close">X</button>
+                        <table>
+                            <tr><th>Antenna</th><td>{{meta.antenna}}</td></tr>
+                            <tr><th>Width (traces)</th><td>{{meta.width}}</td></tr>
+                            <tr><th>Height (samples)</th><td>{{meta.height}}</td></tr>
+                            <tr><th>Track length</th><td>{{meta.length_km_rounded}} km</td></tr>
+                            <tr><th>Max TWT</th><td>{{meta.max_time}} ns</td></tr>
+                            <tr><th>Max depth (assuming 0.2 m/ns)</th><td>{{meta.max_depth}} m</td></tr>
+                            <tr><th>Vertical resolution</th><td>{{meta.depth_resolution_m}} m</td></tr>
+                            <tr><th>Horizontal resolution</th><td>{{meta.trace_resolution_s}} s</td></tr>
+                            <tr><th>Average speed</th><td>{{meta.average_speed}} m/s</td> </tr>
+                        </table>
+                      </div>
+                    </div>
                     <button id="save-button" class="button">Save progress</button>
                     <p>Load data: </p>
                     <input type="file" id="load-button" accept=".json,application/json" style="max-width: 99%;">
                 
                     <button id="submit-button" class="button submit-button">SUBMIT DATA</button>
-                </div>
-                <div class="digitize-widget-card" style="max-width: 150px;">
-                    <p style="margin-top: 0px;">GPR display options</p>
-                    <button id="display-abslog" class="button" style="margin-bottom: 5px;">Absolute</button>
-                    <button id="display-classic" class="button">Classic</button>
+                    <div class="" style="width: 100%; border: 1px solid #777; margin-top: 3px;" id="response-text-div">
+                        <h3 style="margin-top: 5px;">Messages:</h3>
+                        <p id="response-text"></p>
+                    </div>
                 </div>
                 <div class="digitize-widget-card" style="display: none;">
                     <h3 style="margin-top: 5px; margin-bottom: 5px;">Difficulty rating</h2>
@@ -64,26 +81,9 @@
                     </form>
                 </div>
             </div>
-            <div class="digitize-widget-card" style="width: 100%;" id="response-text-div">
-                <h3 style="margin-top: 5px;">Message box</h3>
-                <p id="response-text"></p>
-            </div>
         </div>
         <!-- <button id="load-button">Load data</button> -->
         <div>
-            <div class="digitize-widget-card">
-                <table>
-                    <tr><th>Antenna</th><td>{{meta.antenna}}</td></tr>
-                    <tr><th>Width (traces)</th><td>{{meta.width}}</td></tr>
-                    <tr><th>Height (samples)</th><td>{{meta.height}}</td></tr>
-                    <tr><th>Track length</th><td>{{meta.length_km_rounded}} km</td></tr>
-                    <tr><th>Max TWT</th><td>{{meta.max_time}} ns</td></tr>
-                    <tr><th>Max depth (assuming 0.2 m/ns)</th><td>{{meta.max_depth}} m</td></tr>
-                    <tr><th>Vertical resolution</th><td>{{meta.depth_resolution_m}} m</td></tr>
-                    <tr><th>Horizontal resolution</th><td>{{meta.trace_resolution_s}} s</td></tr>
-                    <tr><th>Average speed</th><td>{{meta.average_speed}} m/s</td> </tr>
-                </table>
-            </div>
             <div class="digitize-widget-card">
                 <form id="interp-class-select" style="width: 100%;"></form>
             </div>

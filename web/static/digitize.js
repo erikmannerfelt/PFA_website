@@ -610,8 +610,28 @@ function set_user_difficulty(difficulty) {
   }
 }
 
+function setup_gpr_meta_table() {
+  const digitizeOverlay = document.getElementById("digitizeTableOverlay");
+  document.getElementById("digitizeTableOpenModal").onclick = () => {
+    digitizeOverlay.style.display = "flex";
+    console.log(digitizeOverlay);
+  };
+
+  document.getElementById("digitizeTableCloseModal").onclick = () => {
+    digitizeOverlay.style.display = "none";
+  }
+
+  /* Close when clicking outside the modal */
+  digitizeOverlay.onclick = (event) => {
+    if (event.target === digitizeOverlay) digitizeOverlay.style.display = "none";
+  };
+}
+
 async function setup_map() {
   let data_saved = true;
+
+
+  setup_gpr_meta_table();
 
   const search_string = window.location.search.slice(1);
   const search_params = new URLSearchParams(search_string);
@@ -640,25 +660,12 @@ async function setup_map() {
         ])
       );
     }
-    // let new_tiles = meta["tiles"].forEach(function (tile) {
-    //     return ;
-    // });
-    tiles[kind] = new_tiles;
+    tiles[kind] = L.layerGroup(new_tiles);
   }
+  L.control.layers(tiles, {}, {collapsed: true}).addTo(map);
 
-  function show_tiles(new_kind) {
-    for (kind in tiles) {
-      if (kind != new_kind) {
-        tiles[kind].forEach(function (tile) {
-          map.removeLayer(tile);
-        });
-      } else {
-        tiles[kind].forEach(function (tile) {
-          tile.addTo(map);
-        });
-      }
-    }
-  }
+  tiles["abslog"].addTo(map);
+
   let track_interval_colors = [
     "red",
     "black",
@@ -770,15 +777,6 @@ async function setup_map() {
       }).addTo(map);
     }
   }
-
-  show_tiles("abslog");
-
-  document.getElementById("display-abslog").onclick = function (_event) {
-    show_tiles("abslog");
-  };
-  document.getElementById("display-classic").onclick = function (_event) {
-    show_tiles("classic");
-  };
 
   map.fitBounds(bounds);
 
@@ -978,11 +976,12 @@ async function setup_map() {
     data_saved = true;
   };
 
-  document
-    .getElementById("user-comment")
-    .addEventListener("change", async function (event) {
+  let comment = document.getElementById("user-comment");
+  if (comment != null) {
+    comment.addEventListener("change", async function (event) {
       meta["comment"] = event.target.value;
     });
+  };
 
   document
     .getElementById("digitize-difficulty-form")
@@ -998,6 +997,7 @@ async function setup_map() {
       event.returnValue = "";
     }
   });
+
 }
 
 async function main() {

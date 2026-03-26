@@ -630,3 +630,44 @@ tr:hover {
   backdrop-filter: blur(3px);
 
 }
+
+/* Overlay background */
+.digitize-modal-overlay {
+  display: none;
+  /* Hidden by default */
+  position: fixed;
+  inset: 0;
+  /* top:0; left:0; right:0; bottom:0 */
+  background: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+/* Modal box */
+.digitize-modal {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  min-width: 300px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow: auto;
+  position: relative;
+}
+
+/* Close button */
+.digitize-modal-close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  border: none;
+  background: #ddd;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.digitize-modal-close:hover {
+  background: #bbb;
+}
