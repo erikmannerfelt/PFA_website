@@ -627,6 +627,31 @@ function setup_gpr_meta_table() {
   };
 }
 
+function setup_topomap(meta) {
+
+  var topomap = L.map("map-topocorr", {
+    crs: L.CRS.Simple,
+    maxZoom: 4,
+    minZoom: -3,
+  });
+  var bounds = [
+    [0, 0],
+    [meta["topocorr_height"], meta["width"] * meta["xscale"]],
+  ]; // Assuming origin (0, 0) at top-left
+
+  let tiles = meta["tiles_topocorr"].forEach(function (tile) {
+        return L.imageOverlay(tile["filepaths"]["abslog"], [
+          [tile["miny"], tile["minx"] * meta["xscale"]],
+          [tile["maxy"], tile["maxx"] * meta["xscale"]],
+        ]).addTo(topomap);
+  });
+
+  topomap.fitBounds(bounds);
+
+  return topomap;
+
+}
+
 async function setup_map() {
   let data_saved = true;
 
@@ -643,6 +668,8 @@ async function setup_map() {
     maxZoom: 4,
     minZoom: -3,
   });
+
+  const topomap = setup_topomap(meta);
   // let imageUrl = 'static/images/ragna-mariebreen_20230305_lighter.jpg';
   var bounds = [
     [0, 0],
@@ -878,6 +905,8 @@ async function setup_map() {
     radius: 5,
   })
     .addTo(overview_map);
+
+  let topo_marker = L.polyline([[0, 0], [meta["topocorr_height"], 0]], {color: "red", opacity: 0.5}).addTo(topomap);
   map.on("mousemove", function (event) {
     let y = event.latlng.lat;
     let x = event.latlng.lng;
@@ -895,10 +924,16 @@ async function setup_map() {
       }
       let track_pt = track["geometry"]["coordinates"][Math.floor((x - start_i) * track["geometry"]["coordinates"].length / length)]
       x_marker.setLatLng([track_pt[1], track_pt[0]]); 
+
+      topo_marker.setLatLngs(topo_marker.getLatLngs().map(({ lat }) => [lat, x]));
       return;
     }
   });
 
+  document.getElementById("topomap-zoomtoline-btn").onclick = function () {
+    topomap.fitBounds(topo_marker.getBounds());
+
+  };
 
   document.getElementById("save-button").onclick = function (event) {
     if (drawn_items.getLayers().length == 0) {

@@ -45,6 +45,42 @@ def get_radargram_cache_dirs(src_filepath: Path) -> tuple[Path, Path]:
 
     return static_dir, cache_dir
 
+def topocorr_vertical_only_vectorized(
+    img: np.ndarray,
+    elevation: np.ndarray,
+    depth: np.ndarray | None = None,
+    fill_value: int = 255,
+) -> tuple[np.ndarray, np.ndarray]:
+    img = np.asarray(img)
+    elevation = np.asarray(elevation)
+
+    if img.shape[1] != elevation.shape[0]:
+        raise ValueError(
+            f"Image width ({img.shape[1]}) and elevation length ({elevation.shape[0]}) do not match."
+        )
+
+    if depth is not None and len(depth) > 1:
+        depth = np.asarray(depth)
+        y_res = float(np.abs(np.nanmedian(np.diff(depth))))
+    else:
+        y_res = 1.0
+
+    if not np.isfinite(y_res) or y_res == 0:
+        raise ValueError(f"Invalid vertical resolution: {y_res}")
+
+    offsets_px = np.rint((np.nanmax(elevation) - elevation) / y_res).astype(np.int32)
+    offsets_px = np.maximum(offsets_px, 0)
+
+    h, w = img.shape[:2]
+    out_h = h + int(offsets_px.max())
+
+    out = np.full((out_h, w) + img.shape[2:], fill_value, dtype=img.dtype)
+
+    rows = np.arange(h, dtype=np.int32)[:, None] + offsets_px[None, :]
+    cols = np.arange(w, dtype=np.int32)[None, :]
+
+    out[rows, cols, ...] = img
+    return out, offsets_px
 
 def parse_radargram(
     src_filepath: Path, chunksize: int = 1000, override_cache: bool = False
@@ -191,6 +227,45 @@ def parse_radargram(
                     }
                 )
 
+        
+        if images is None:
+            images = normalize(data["data"].values)
+
+        topocorr_abslog, topocorr_offsets = topocorr_vertical_only_vectorized(
+            img=images["abslog"],
+            elevation=data["elevation"].values,
+            depth=data["depth"].values,
+            fill_value=255,
+        )
+        tiles_topocorr = []
+        for col in range(0, topocorr_abslog.shape[1], chunksize):
+            col_slice = slice(col, min(col + chunksize, topocorr_abslog.shape[1]))
+            for row in range(0, topocorr_abslog.shape[0], chunksize):
+                row_slice = slice(row, min(row + chunksize, topocorr_abslog.shape[0]))
+
+                filepath = (
+                    static_dir
+                    / f"tiles_topocorr/abslog/tile_{str(row).zfill(5)}_{str(col).zfill(5)}.jpg"
+                )
+
+                if (not filepath.is_file()) or override_cache:
+                    tile_arr = topocorr_abslog[row_slice, col_slice]
+                    filepath.parent.mkdir(exist_ok=True, parents=True)
+                    Image.fromarray(tile_arr).save(filepath)
+
+                tiles_topocorr.append(
+                    {
+                        "filepaths": {
+                            "abslog": str(filepath).replace(static_base_part, "")
+                        },
+                        "minx": col,
+                        "maxx": col_slice.stop,
+                        "miny": topocorr_abslog.shape[0] - row_slice.stop,
+                        "maxy": topocorr_abslog.shape[0] - row,
+                    }
+                )
+
+
         thumbnail_path = static_dir / "thumbnail.jpg"
 
         if (not thumbnail_path.is_file()) or override_cache:
@@ -284,6 +359,8 @@ def parse_radargram(
             },
             "track": tracks_geojson,
             "tiles": tiles,
+            "tiles_topocorr": tiles_topocorr,
+            "topocorr_height": topocorr_abslog.shape[0],
         }
         meta["xscale"] = xscale.get(meta["radar_key"], 1.0)
         meta_cache_path.parent.mkdir(exist_ok=True, parents=True)
@@ -295,24 +372,27 @@ def parse_all_radargrams(progress: bool = False, redo_cache: bool = False):
     radargrams = {}
 
     glacier_dirs = list(Path("processed_radar").glob("*"))
-    with tqdm.tqdm(total=len(glacier_dirs), disable=(not progress)) as progress_bar:
-        for glacier_dir in glacier_dirs:
-            if not glacier_dir.is_dir():
+
+    filepaths = []
+    for glacier_dir in glacier_dirs:
+        if not glacier_dir.is_dir():
+            continue
+
+        for year_dir in glacier_dir.iterdir():
+            if not year_dir.is_dir():
                 continue
+            key = f"{glacier_dir.stem} {year_dir.stem}"
+            for filepath in year_dir.rglob("*.nc"):
+                filepaths.append((key, filepath))
 
-            for year_dir in glacier_dir.iterdir():
-                if not year_dir.is_dir():
-                    continue
+    for (key, filepath) in tqdm.tqdm(filepaths, disable=(not progress)):
+        if key not in radargrams:
+            radargrams[key] = {}
 
-                key = f"{glacier_dir.stem} {year_dir.stem}"
-                radargrams[key] = {}
-                for filepath in year_dir.rglob("*.nc"):
-                    progress_bar.set_description("/".join(filepath.parts[-3:]))
-                    radargram = parse_radargram(filepath, override_cache=redo_cache)
-                    radargram["antenna"] = radargram["antenna"].encode(errors="ignore").decode()
-                    radargrams[key][radargram["radar_key"]] = radargram
-                progress_bar.update()
-
+        radargram = parse_radargram(filepath, override_cache=redo_cache)
+        radargram["antenna"] = radargram["antenna"].encode(errors="ignore").decode()
+        radargrams[key][radargram["radar_key"]] = radargram
+        
     return radargrams
 
 

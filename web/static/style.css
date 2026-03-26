@@ -72,6 +72,11 @@ li {
   width: 99%;
 }
 
+#map-topocorr {
+  height: 99%;
+  width: 99%;
+}
+
 form {
   display: flex;
   flex-wrap: wrap;
