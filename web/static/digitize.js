@@ -1,3 +1,4 @@
+const DEFAULT_LAYER_CLASS = "water_table";
 function get_layer_classes() {
   let props = {
     firn_ice_interface: {
@@ -90,7 +91,6 @@ function make_color_selector() {
 
   const classes = get_layer_classes();
 
-  let initial = true;
   for (key in classes) {
     let item = document.createElement("input");
 
@@ -102,7 +102,7 @@ function make_color_selector() {
     item.name = "key";
     item.value = key;
 
-    if (key == "water_table") {
+    if (key == DEFAULT_LAYER_CLASS) {
       item.checked = true;
     }
     var patch = document.createElement("span");
@@ -833,7 +833,6 @@ async function setup_map() {
     }
     tiles[kind] = L.layerGroup(new_tiles);
   }
-  L.control.layers(tiles, {}, {collapsed: true}).addTo(map);
 
   tiles["abslog"].addTo(map);
 
@@ -852,6 +851,7 @@ async function setup_map() {
 
   let drawn_items = setup_draw_features(map);
 
+  L.control.layers(tiles, {"Interpretations": drawn_items}, {collapsed: true}).addTo(map);
   await load_latest(meta, drawn_items);
 
   if (meta["difficulty"] == undefined) {
