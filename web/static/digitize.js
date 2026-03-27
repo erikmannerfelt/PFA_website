@@ -1,4 +1,12 @@
 const DEFAULT_LAYER_CLASS = "water_table";
+const TRACK_INTERVAL_COLORS = [
+  "red",
+  "black",
+  "green",
+  "purple",
+  "orange",
+  "blue",
+];
 function get_layer_classes() {
   let props = {
     firn_ice_interface: {
@@ -628,14 +636,6 @@ function setup_gpr_meta_table() {
 }
 
 function add_map_axislabels(map, meta, height_col = "height", y_value = "time") {
-  let track_interval_colors = [
-    "red",
-    "black",
-    "green",
-    "purple",
-    "orange",
-    "blue",
-  ];
 
   // Add interval indicators to the digitization window
   if (meta["interval_indicators"] != null) {
@@ -648,7 +648,7 @@ function add_map_axislabels(map, meta, height_col = "height", y_value = "time") 
             [meta[height_col] + rect_height, pair[1] * meta["xscale"]],
           ],
           {
-            color: track_interval_colors[i % track_interval_colors.length],
+            color: TRACK_INTERVAL_COLORS[i % TRACK_INTERVAL_COLORS.length],
             weight: 0,
             interactive: false,
           }
@@ -877,7 +877,7 @@ async function setup_map() {
   meta["track"].forEach(function (track_json, _) {
     let i = track_json.properties.i;
     let lines = L.geoJSON(track_json, {
-      color: track_interval_colors[i % track_interval_colors.length],
+      color: TRACK_INTERVAL_COLORS[i % TRACK_INTERVAL_COLORS.length],
       opacity: 0.5,
     })
       .bindPopup(function (layer) {
@@ -898,7 +898,7 @@ async function setup_map() {
               polygon: false,
               pathOptions: {
                 stroke: true,
-                color: track_interval_colors[i % track_interval_colors.length],
+                color: TRACK_INTERVAL_COLORS[i % TRACK_INTERVAL_COLORS.length],
               }, // Arrow style
             }),
           },
