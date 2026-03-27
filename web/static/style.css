@@ -29,36 +29,36 @@ li {
 
 }
 
-#map .leaflet-div-icon {
+.digitize-map .leaflet-div-icon {
   width: 0;
   height: 0;
   border: 0;
   padding: 0;
 }
 
-#map .leaflet-div-icon span {
+.digitize-map .leaflet-div-icon span {
   display: inline-block;
   padding: 3px;
   /* transform: translate(-50%, -50%); */
 }
 
-#map .interval-indicator {
+.digitize-map .interval-indicator {
   transform: translate(-50%, -50%);
 }
 
-#map .ylabel-left {
+.digitize-map .ylabel-left {
   transform: translate(-100%, 0%);
 }
 
-#map .ylabel-right {
+.digitize-map .ylabel-right {
   transform: translate(0%, 0%);
 }
 
-#map .xlabel {
+.digitize-map .xlabel {
   transform: translate(-50%, 0%);
 }
 
-#map .leaflet-div-icon b {
+.digitize-map .leaflet-div-icon b {
   display: inline-block;
   padding: 3px;
   border: 1px solid #666;

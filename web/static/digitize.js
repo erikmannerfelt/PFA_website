@@ -525,10 +525,10 @@ async function load_digitized_inner(data, meta, drawn_items) {
           "error"
         );
         return;
-        layer = L.geoJSON(feature_geojson, { style: class_props.color });
+        // layer = L.geoJSON(feature_geojson, { style: class_props.color });
 
-        console.log("Fallback load implementation as GeoJSON. Might be wrong!");
-        console.log(feature_geojson);
+        // console.log("Fallback load implementation as GeoJSON. Might be wrong!");
+        // console.log(feature_geojson);
       }
 
       drawn_items.addLayer(layer);
@@ -627,12 +627,154 @@ function setup_gpr_meta_table() {
   };
 }
 
+function add_map_axislabels(map, meta, height_col = "height", y_value = "time") {
+
+  // Add interval indicators to the digitization window
+  if (meta["interval_indicators"] != null) {
+    if (meta["interval_indicators"].length > 1) {
+      let rect_height = meta[height_col] / 5;
+      meta["interval_indicators"].forEach(function (pair, i) {
+        L.rectangle(
+          [
+            [meta[height_col], pair[0] * meta["xscale"]],
+            [meta[height_col] + rect_height, pair[1] * meta["xscale"]],
+          ],
+          {
+            color: track_interval_colors[i % track_interval_colors.length],
+            weight: 0,
+            interactive: false,
+          }
+        ).addTo(map);
+        let icon = L.divIcon({
+          html: `<span class="interval-indicator">${i}</span>`,
+          iconSize: "auto",
+        });
+        L.marker(
+          [
+            meta[height_col] + rect_height / 2,
+            (pair[0] * meta["xscale"] + pair[1] * meta["xscale"]) / 2,
+          ],
+          { icon: icon, interactive: false }
+        ).addTo(map);
+      });
+
+      let icon = L.divIcon({
+        html: "<b>Intervals:</b>",
+        iconSize: "auto",
+      });
+      L.marker([meta[height_col] + rect_height / 2, 0], { icon: icon })
+        .bindPopup(function (layer) {
+          return "Intervals are detected events where the radar may have been stopped and resumed at irregular times/places";
+        })
+        .addTo(map);
+    }
+
+    // Add x labels
+    let time_interval = meta["max_time"] / meta["width"];
+    meta["interval_indicators"].forEach(function (pair, i) {
+      for (
+        let time = 0;
+        time <= time_interval * (pair[1] - pair[0]);
+        time += 100
+      ) {
+        let icon = L.divIcon({
+          html: `<span class="xlabel">${time}s</span>`,
+          iconSize: "auto",
+        });
+        let marker = L.marker(
+          [0, meta["xscale"] * (pair[0] + time / time_interval)],
+          { icon: icon, interactive: false }
+        ).addTo(map);
+      }
+    });
+  }
+  // Add a horizontal line below the radargram
+  L.polyline(
+    [
+      [0, 0],
+      [0, meta["width"] * meta["xscale"]],
+    ],
+    { color: "black", interactive: false }
+  ).addTo(map);
+
+  function* range(start, stop, step = 1) {
+    // Ascending
+    if (step > 0) {
+      for (let v = start; v <= stop; v += step) yield v;
+    }
+    // Descending
+    else {
+      for (let v = start; v >= stop; v += step) yield v;
+    }
+  }
+  
+
+  const steps = {time: 50, elevation: 10};
+
+  const yConfigs = {
+    time: {
+      yticks: () => range(0, meta["max_time"], steps.time),
+      to_y_px: y => y * (meta[height_col] / meta["max_time"]),
+      y_unit: "ns"
+    },
+    elevation: {
+      yticks: () => range(
+          Math.floor(meta["topocorr_maxy"] / steps.elevation) * steps.elevation,
+          Math.ceil(meta["topocorr_miny"] / steps.elevation) * steps.elevation,
+          -steps.elevation
+      ),
+      to_y_px: y => (y - meta["topocorr_miny"]) * (meta[height_col] / (meta["topocorr_maxy"] - meta["topocorr_miny"])),
+      y_unit: "m",
+    }
+  };
+
+  const {yticks, to_y_px, y_unit} = yConfigs[y_value];
+
+  // Add y (depth) labels and decoration
+  for (vals of [
+    ["left", 0],
+    ["right", meta["width"] * meta["xscale"]],
+  ]) {
+    let side = vals[0];
+    let x = vals[1];
+
+    // Add a vertical line along the radargram side.
+    L.polyline(
+      [
+        [0, x],
+        [meta[height_col], x],
+      ],
+      { color: "black", interactive: false }
+    ).addTo(map);
+
+
+    // Add y labels
+    let i = 0;
+    for (let ytick of [...yticks()]) {
+      let y_px = to_y_px(ytick);
+      let ytick_str = (i % 2 == 0) ? `${ytick}${y_unit}` : "—";
+
+      let icon = L.divIcon({
+        html: `<span class="ylabel-${side}">${ytick_str}</span>`,
+        iconSize: "auto",
+      });
+      L.marker([meta[height_col] - y_px, x], {
+        icon: icon,
+        interactive: false,
+      }).addTo(map);
+
+      i += 1;
+    }
+  }
+
+}
+
 function setup_topomap(meta) {
 
   var topomap = L.map("map-topocorr", {
     crs: L.CRS.Simple,
     maxZoom: 4,
-    minZoom: -3,
+    minZoom: -4,
   });
   var bounds = [
     [0, 0],
@@ -645,8 +787,10 @@ function setup_topomap(meta) {
           [tile["maxy"], tile["maxx"] * meta["xscale"]],
         ]).addTo(topomap);
   });
+  add_map_axislabels(topomap, meta, height_col="topocorr_height", y_value="elevation");
 
-  topomap.fitBounds(bounds);
+  // topomap.fitBounds(bounds);
+  topomap.setView([meta["topocorr_height"] / 2, 0], -1);
 
   return topomap;
 
@@ -702,108 +846,7 @@ async function setup_map() {
     "blue",
   ];
 
-  // Add interval indicators to the digitization window
-  if (meta["interval_indicators"] != null) {
-    if (meta["interval_indicators"].length > 1) {
-      let rect_height = meta["height"] / 5;
-      meta["interval_indicators"].forEach(function (pair, i) {
-        L.rectangle(
-          [
-            [meta["height"], pair[0] * meta["xscale"]],
-            [meta["height"] + rect_height, pair[1] * meta["xscale"]],
-          ],
-          {
-            color: track_interval_colors[i % track_interval_colors.length],
-            weight: 0,
-            interactive: false,
-          }
-        ).addTo(map);
-        let icon = L.divIcon({
-          html: `<span class="interval-indicator">${i}</span>`,
-          iconSize: "auto",
-        });
-        L.marker(
-          [
-            meta["height"] + rect_height / 2,
-            (pair[0] * meta["xscale"] + pair[1] * meta["xscale"]) / 2,
-          ],
-          { icon: icon, interactive: false }
-        ).addTo(map);
-      });
-
-      let icon = L.divIcon({
-        html: "<b>Intervals:</b>",
-        iconSize: "auto",
-      });
-      L.marker([meta["height"] + rect_height / 2, 0], { icon: icon })
-        .bindPopup(function (layer) {
-          return "Intervals are detected events where the radar may have been stopped and resumed at irregular times/places";
-        })
-        .addTo(map);
-    }
-
-    // Add x labels
-    let time_interval = meta["max_time"] / meta["width"];
-    meta["interval_indicators"].forEach(function (pair, i) {
-      for (
-        let time = 0;
-        time <= time_interval * (pair[1] - pair[0]);
-        time += 100
-      ) {
-        let icon = L.divIcon({
-          html: `<span class="xlabel">${time}s</span>`,
-          iconSize: "auto",
-        });
-        let marker = L.marker(
-          [0, meta["xscale"] * (pair[0] + time / time_interval)],
-          { icon: icon, interactive: false }
-        ).addTo(map);
-      }
-    });
-  }
-
-  // Add a horizontal line below the radargram
-  L.polyline(
-    [
-      [0, 0],
-      [0, meta["width"] * meta["xscale"]],
-    ],
-    { color: "black", interactive: false }
-  ).addTo(map);
-
-  // Add y (depth) labels and decoration
-  for (vals of [
-    ["left", 0],
-    ["right", meta["width"] * meta["xscale"]],
-  ]) {
-    let side = vals[0];
-    let x = vals[1];
-
-    // Add a vertical line along the radargram side.
-    L.polyline(
-      [
-        [0, x],
-        [meta["height"], x],
-      ],
-      { color: "black", interactive: false }
-    ).addTo(map);
-
-    // Add y labels
-    for (let depth = 0; depth <= meta["max_time"]; depth += 50) {
-      let y_px = depth * (meta["height"] / meta["max_time"]);
-
-      let depth_str = (depth % 100 == 0) ? `${depth}ns` : "—";
-
-      let icon = L.divIcon({
-        html: `<span class="ylabel-${side}">${depth_str}</span>`,
-        iconSize: "auto",
-      });
-      L.marker([meta["height"] - y_px, x], {
-        icon: icon,
-        interactive: false,
-      }).addTo(map);
-    }
-  }
+  add_map_axislabels(map, meta, "height", y_value="time");
 
   map.fitBounds(bounds);
 
@@ -862,34 +905,6 @@ async function setup_map() {
         ],
       }).addTo(overview_map);
     });
-  });
-
-  fetch("/all_radargrams.json")
-    .then((response) => response.json())
-    .then(function (all_radargrams) {
-      for (radar_key in all_radargrams) {
-        if (radar_key == meta["radar_key"]) {
-          continue;
-        }
-        // Filter by those that start with the same three parts (e.g. amundsenisen-profile-2025).
-        if (radar_key.split("-").slice(0, 3).join("-") != meta["radar_key"].split("-").slice(0, 3).join("-")) {
-          continue;
-        };
-        fetch(`/radargram_meta/${radar_key}.json`).then((response) => response.json()).then(function (other_meta) {
-
-          other_meta["track"].forEach(function (track_json, _) {
-            L.geoJSON(track_json, {
-              color: "#ccc",
-              opacity: 0.5,
-            })
-              .bindPopup(function (_) {
-                return `<a href=/digitize/${other_meta.radar_key} target="_blank">${other_meta.radar_key} </a>`
-              })
-              .addTo(overview_map);
-          });
-        });
-
-      };
   });
 
   let overview_bounds = [

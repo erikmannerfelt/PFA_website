@@ -4,6 +4,7 @@ import warnings
 from pathlib import Path
 
 import geopandas as gpd
+import pandas as pd
 import numpy as np
 import scipy
 import scipy.interpolate
@@ -45,7 +46,7 @@ def get_radargram_cache_dirs(src_filepath: Path) -> tuple[Path, Path]:
 
     return static_dir, cache_dir
 
-def topocorr_vertical_only_vectorized(
+def topocorr_vertical(
     img: np.ndarray,
     elevation: np.ndarray,
     depth: np.ndarray | None = None,
@@ -81,6 +82,28 @@ def topocorr_vertical_only_vectorized(
 
     out[rows, cols, ...] = img
     return out, offsets_px
+
+def topocorr_vertical_params(n_rows, elevation, depth=None):
+    elevation = np.asarray(elevation)
+
+    if depth is not None and len(depth) > 1:
+        depth = np.asarray(depth)
+        y_res = float(np.abs(np.nanmedian(np.diff(depth))))
+    else:
+        y_res = 1.0
+
+    offsets_px = np.rint((np.nanmax(elevation) - elevation) / y_res).astype(np.int32)
+    offsets_px = np.maximum(offsets_px, 0)
+
+    extra_top = int(offsets_px.max()) if offsets_px.size else 0
+    out_h = int(n_rows + extra_top)
+
+    return {
+        "offsets_px": offsets_px,
+        "extra_top": extra_top,
+        "out_h": out_h,
+        "y_res": y_res,
+    }
 
 def parse_radargram(
     src_filepath: Path, chunksize: int = 1000, override_cache: bool = False
@@ -228,20 +251,15 @@ def parse_radargram(
                 )
 
         
-        if images is None:
-            images = normalize(data["data"].values)
 
-        topocorr_abslog, topocorr_offsets = topocorr_vertical_only_vectorized(
-            img=images["abslog"],
-            elevation=data["elevation"].values,
-            depth=data["depth"].values,
-            fill_value=255,
-        )
+        topocorr_abslog = None
+        topocorr_height = topocorr_vertical_params(data["data"].shape[0], data["elevation"], data["depth"])["out_h"]
+
         tiles_topocorr = []
-        for col in range(0, topocorr_abslog.shape[1], chunksize):
-            col_slice = slice(col, min(col + chunksize, topocorr_abslog.shape[1]))
-            for row in range(0, topocorr_abslog.shape[0], chunksize):
-                row_slice = slice(row, min(row + chunksize, topocorr_abslog.shape[0]))
+        for col in range(0, data["data"].shape[1], chunksize):
+            col_slice = slice(col, min(col + chunksize, data["data"].shape[1]))
+            for row in range(0, topocorr_height, chunksize):
+                row_slice = slice(row, min(row + chunksize, topocorr_height))
 
                 filepath = (
                     static_dir
@@ -249,6 +267,15 @@ def parse_radargram(
                 )
 
                 if (not filepath.is_file()) or override_cache:
+                    if images is None:
+                        images = normalize(data["data"].values)
+                    if topocorr_abslog is None:
+                        topocorr_abslog, _ = topocorr_vertical(
+                            img=images["abslog"],
+                            elevation=data["elevation"].values,
+                            depth=data["depth"].values,
+                            fill_value=255,
+                        )
                     tile_arr = topocorr_abslog[row_slice, col_slice]
                     filepath.parent.mkdir(exist_ok=True, parents=True)
                     Image.fromarray(tile_arr).save(filepath)
@@ -260,8 +287,8 @@ def parse_radargram(
                         },
                         "minx": col,
                         "maxx": col_slice.stop,
-                        "miny": topocorr_abslog.shape[0] - row_slice.stop,
-                        "maxy": topocorr_abslog.shape[0] - row,
+                        "miny": topocorr_height - row_slice.stop,
+                        "maxy": topocorr_height - row,
                     }
                 )
 
@@ -346,6 +373,8 @@ def parse_radargram(
             "length_km_rounded": round(length / 1000, 1),
             "max_depth": round(data.depth.max().item(), 2),
             "max_time": round(data["return-time"].max().item(), 2),
+            "start_datetime": data.attrs["start-datetime"],
+            "processing_datetime": pd.to_datetime(data.attrs["processing-datetime"]).round("1s").isoformat(),
             "antenna": data.attrs["antenna"],
             "depth_resolution_m": round(float(np.diff(data.depth.values[-2:])[0]), 3),
             "trace_resolution_s": float(trace_resolution_s),
@@ -360,7 +389,9 @@ def parse_radargram(
             "track": tracks_geojson,
             "tiles": tiles,
             "tiles_topocorr": tiles_topocorr,
-            "topocorr_height": topocorr_abslog.shape[0],
+            "topocorr_height": topocorr_height,
+            "topocorr_maxy": data["elevation"].max().item(),
+            "topocorr_miny": data["elevation"].min().item() - data["depth"].max().item(),
         }
         meta["xscale"] = xscale.get(meta["radar_key"], 1.0)
         meta_cache_path.parent.mkdir(exist_ok=True, parents=True)
