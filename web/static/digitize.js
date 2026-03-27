@@ -628,6 +628,14 @@ function setup_gpr_meta_table() {
 }
 
 function add_map_axislabels(map, meta, height_col = "height", y_value = "time") {
+  let track_interval_colors = [
+    "red",
+    "black",
+    "green",
+    "purple",
+    "orange",
+    "blue",
+  ];
 
   // Add interval indicators to the digitization window
   if (meta["interval_indicators"] != null) {
@@ -836,14 +844,6 @@ async function setup_map() {
 
   tiles["abslog"].addTo(map);
 
-  let track_interval_colors = [
-    "red",
-    "black",
-    "green",
-    "purple",
-    "orange",
-    "blue",
-  ];
 
   add_map_axislabels(map, meta, "height", y_value="time");
 
