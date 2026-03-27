@@ -635,17 +635,19 @@ function setup_gpr_meta_table() {
   };
 }
 
-function add_map_axislabels(map, meta, height_col = "height", y_value = "time") {
+function add_map_axislabels(map, meta, height_col = "height", y_value = "time", xscale = "xscale") {
+
+  let items = [];
 
   // Add interval indicators to the digitization window
   if (meta["interval_indicators"] != null) {
     if (meta["interval_indicators"].length > 1) {
       let rect_height = meta[height_col] / 5;
       meta["interval_indicators"].forEach(function (pair, i) {
-        L.rectangle(
+        let rect = L.rectangle(
           [
-            [meta[height_col], pair[0] * meta["xscale"]],
-            [meta[height_col] + rect_height, pair[1] * meta["xscale"]],
+            [meta[height_col], pair[0] * meta[xscale]],
+            [meta[height_col] + rect_height, pair[1] * meta[xscale]],
           ],
           {
             color: TRACK_INTERVAL_COLORS[i % TRACK_INTERVAL_COLORS.length],
@@ -653,28 +655,32 @@ function add_map_axislabels(map, meta, height_col = "height", y_value = "time") 
             interactive: false,
           }
         ).addTo(map);
+        items.push(rect);
         let icon = L.divIcon({
           html: `<span class="interval-indicator">${i}</span>`,
           iconSize: "auto",
         });
-        L.marker(
+        let mark = L.marker(
           [
             meta[height_col] + rect_height / 2,
-            (pair[0] * meta["xscale"] + pair[1] * meta["xscale"]) / 2,
+            (pair[0] * meta[xscale] + pair[1] * meta[xscale]) / 2,
           ],
           { icon: icon, interactive: false }
         ).addTo(map);
+        items.push(mark);
       });
 
       let icon = L.divIcon({
         html: "<b>Intervals:</b>",
         iconSize: "auto",
       });
-      L.marker([meta[height_col] + rect_height / 2, 0], { icon: icon })
+      let mark = L.marker([meta[height_col] + rect_height / 2, 0], { icon: icon })
         .bindPopup(function (layer) {
           return "Intervals are detected events where the radar may have been stopped and resumed at irregular times/places";
         })
         .addTo(map);
+
+      items.push(mark);
     }
 
     // Add x labels
@@ -690,20 +696,22 @@ function add_map_axislabels(map, meta, height_col = "height", y_value = "time") 
           iconSize: "auto",
         });
         let marker = L.marker(
-          [0, meta["xscale"] * (pair[0] + time / time_interval)],
+          [0, meta[xscale] * (pair[0] + time / time_interval)],
           { icon: icon, interactive: false }
         ).addTo(map);
+
+        items.push(marker);
       }
     });
   }
   // Add a horizontal line below the radargram
-  L.polyline(
+  items.push(L.polyline(
     [
       [0, 0],
-      [0, meta["width"] * meta["xscale"]],
+      [0, meta["width"] * meta[xscale]],
     ],
     { color: "black", interactive: false }
-  ).addTo(map);
+  ).addTo(map));
 
   function* range(start, stop, step = 1) {
     // Ascending
@@ -741,19 +749,20 @@ function add_map_axislabels(map, meta, height_col = "height", y_value = "time") 
   // Add y (depth) labels and decoration
   for (vals of [
     ["left", 0],
-    ["right", meta["width"] * meta["xscale"]],
+    ["right", meta["width"] * meta[xscale]],
   ]) {
     let side = vals[0];
     let x = vals[1];
 
     // Add a vertical line along the radargram side.
-    L.polyline(
+    let line = L.polyline(
       [
         [0, x],
         [meta[height_col], x],
       ],
       { color: "black", interactive: false }
     ).addTo(map);
+    items.push(line);
 
 
     // Add y labels
@@ -766,16 +775,53 @@ function add_map_axislabels(map, meta, height_col = "height", y_value = "time") 
         html: `<span class="ylabel-${side}">${ytick_str}</span>`,
         iconSize: "auto",
       });
-      L.marker([meta[height_col] - y_px, x], {
+      let marker = L.marker([meta[height_col] - y_px, x], {
         icon: icon,
         interactive: false,
       }).addTo(map);
+      items.push(marker);
 
       i += 1;
     }
   }
+  return items;
 
 }
+
+function add_topocorr_tiles(topomap, meta) {
+
+  const tiles = [];
+
+  meta["tiles_topocorr"].forEach(function (tile) {
+          tiles.push(L.imageOverlay(tile["filepaths"]["abslog"], [
+            [tile["miny"], tile["minx"] * meta["xscale_topocorr"]],
+            [tile["maxy"], tile["maxx"] * meta["xscale_topocorr"]],
+          ]).addTo(topomap)); 
+  });
+
+  return tiles;
+}
+
+function update_topocorr_xscale(topomap, meta, topo_layers = null, xscale_increment = 0) {
+
+  if (topo_layers != null) {
+    for (item of topo_layers) {
+      topomap.removeLayer(item);
+    };
+  };
+  const old_xscale = meta["xscale_topocorr"];
+  meta["xscale_topocorr"] = old_xscale + xscale_increment;
+
+  let new_tiles = add_topocorr_tiles(topomap, meta);
+
+  let new_annotations = add_map_axislabels(topomap, meta, height_col="topocorr_height", y_value="elevation", xscale="xscale_topocorr");
+  let center = topomap.getCenter();
+
+  topomap.setView([center.lat, center.lng * (meta["xscale_topocorr"] / old_xscale)], topomap.getZoom(), {duration: 0});
+  
+  return new_tiles.concat(new_annotations);
+
+};
 
 function setup_topomap(meta) {
 
@@ -784,23 +830,12 @@ function setup_topomap(meta) {
     maxZoom: 4,
     minZoom: -4,
   });
-  var bounds = [
-    [0, 0],
-    [meta["topocorr_height"], meta["width"] * meta["xscale"]],
-  ]; // Assuming origin (0, 0) at top-left
 
-  let tiles = meta["tiles_topocorr"].forEach(function (tile) {
-        return L.imageOverlay(tile["filepaths"]["abslog"], [
-          [tile["miny"], tile["minx"] * meta["xscale"]],
-          [tile["maxy"], tile["maxx"] * meta["xscale"]],
-        ]).addTo(topomap);
-  });
-  add_map_axislabels(topomap, meta, height_col="topocorr_height", y_value="elevation");
-
-  // topomap.fitBounds(bounds);
   topomap.setView([meta["topocorr_height"] / 2, 0], -1);
 
-  return topomap;
+  let topo_items = update_topocorr_xscale(topomap, meta);
+
+  return [topomap, topo_items];
 
 }
 
@@ -821,7 +856,10 @@ async function setup_map() {
     minZoom: -3,
   });
 
-  const topomap = setup_topomap(meta);
+  meta["xscale_topocorr"] = meta["xscale"] * 2;
+  let _topo = setup_topomap(meta);
+  const topomap = _topo[0];
+  let topo_items = _topo[1];
   // let imageUrl = 'static/images/ragna-mariebreen_20230305_lighter.jpg';
   var bounds = [
     [0, 0],
@@ -940,7 +978,7 @@ async function setup_map() {
       let track_pt = track["geometry"]["coordinates"][Math.floor((x - start_i) * track["geometry"]["coordinates"].length / length)]
       x_marker.setLatLng([track_pt[1], track_pt[0]]); 
 
-      topo_marker.setLatLngs(topo_marker.getLatLngs().map(({ lat }) => [lat, x]));
+      topo_marker.setLatLngs(topo_marker.getLatLngs().map(({ lat }) => [lat, x * meta["xscale_topocorr"] / meta["xscale"]]));
       return;
     }
   });
@@ -1047,6 +1085,17 @@ async function setup_map() {
       event.returnValue = "";
     }
   });
+
+  document.getElementById("topomap-zoom-in").onclick = function () {
+    topo_items = update_topocorr_xscale(topomap, meta, topo_items, 1);
+  };
+  document.getElementById("topomap-zoom-out").onclick = function () {
+    if (meta["xscale_topocorr"] == 1) {
+      return;
+    }
+    topo_items = update_topocorr_xscale(topomap, meta, topo_items, -1);
+  };
+  
 
 }
 
