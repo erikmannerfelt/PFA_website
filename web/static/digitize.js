@@ -739,7 +739,7 @@ function add_map_axislabels(map, meta, height_col = "height", y_value = "time", 
           Math.ceil(meta["topocorr_miny"] / steps.elevation) * steps.elevation,
           -steps.elevation
       ),
-      to_y_px: y => (y - meta["topocorr_miny"]) * (meta[height_col] / (meta["topocorr_maxy"] - meta["topocorr_miny"])),
+      to_y_px: y => meta[height_col] - (y - meta["topocorr_miny"]) * (meta[height_col] / (meta["topocorr_maxy"] - meta["topocorr_miny"])),
       y_unit: "m",
     }
   };
