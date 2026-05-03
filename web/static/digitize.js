@@ -856,10 +856,6 @@ async function setup_map() {
     minZoom: -3,
   });
 
-  meta["xscale_topocorr"] = meta["xscale"] * 2;
-  let _topo = setup_topomap(meta);
-  const topomap = _topo[0];
-  let topo_items = _topo[1];
   // let imageUrl = 'static/images/ragna-mariebreen_20230305_lighter.jpg';
   var bounds = [
     [0, 0],
@@ -958,6 +954,11 @@ async function setup_map() {
     radius: 5,
   })
     .addTo(overview_map);
+
+  meta["xscale_topocorr"] = meta["xscale"] * 2;
+  let _topo = setup_topomap(meta);
+  const topomap = _topo[0];
+  let topo_items = _topo[1];
 
   let topo_marker = L.polyline([[0, 0], [meta["topocorr_height"], 0]], {color: "red", opacity: 0.5}).addTo(topomap);
   map.on("mousemove", function (event) {
