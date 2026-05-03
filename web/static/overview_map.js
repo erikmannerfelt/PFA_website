@@ -21,32 +21,35 @@ function add_overview_map(map_id, fit_bounds = true, radar_key = null) {
         if (radar_key == radar_key2) {
           continue;
         };
-        fetch(`/radargram_meta/${radar_key2}.json`).then((response) => response.json()).then(function (other_meta) {
+        fetch(`/radargram_meta/${radar_key2}.json`)
+        .then((response) => response.json())
+        .then(function (other_meta) {
+          const orig_style = { color: "#ccc", opacity: 0.5 };
 
-          other_meta["track"].forEach(function (track_json, _) {
-            const orig_style = {color: "#ccc", opacity: 0.5};
-            let feature = L.geoJSON(track_json, orig_style)
-              .bindPopup(function (_) {
-                let link = document.createElement("a");
-                link.href = `/digitize/${other_meta.radar_key}`
-                link.innerHTML = `<p>${other_meta.radar_key}</p><img src="/static/radargrams/${other_meta.radar_key}/thumbnail.jpg" style="width: 100%;"></img>`;
+          let feature = L.geoJSON(other_meta["track"], {
+            style: orig_style,
+          })
+            .bindPopup(function (_) {
+              let link = document.createElement("a");
+              link.href = `/digitize/${other_meta.radar_key}`;
+              link.innerHTML = `<p>${other_meta.radar_key}</p><img src="/static/radargrams/${other_meta.radar_key}/thumbnail.jpg" style="width: 100%;"></img>`;
+              link.target = "_blank";
+              return link;
+            })
+            .addTo(overview_map);
 
-                link.target = "_blank";
-                return link;
-              })
-              .addTo(overview_map);
-
-            feature.on("popupopen", () => {
-              feature.setStyle({
-                color: "#f93",
-                opacity: 0.9,
-              });
-            });
-            feature.on("popupclose", () => {
-              feature.setStyle(orig_style);
+          feature.on("popupopen", () => {
+            feature.setStyle({
+              color: "#f93",
+              opacity: 0.9,
             });
           });
+
+          feature.on("popupclose", () => {
+            feature.setStyle(orig_style);
+          });
         });
+
 
       if (fit_bounds) {
         let overview_bounds = [
