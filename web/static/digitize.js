@@ -240,6 +240,7 @@ function split_polyline(layer, x_coord, y_coord, drawn_items) {
     create_polyline(coords, drawn_items, layer.properties.kind);
   }
 
+  drawn_items.removeLayer(layer);
   layer._map.removeLayer(layer);
   layer.remove();
 }
